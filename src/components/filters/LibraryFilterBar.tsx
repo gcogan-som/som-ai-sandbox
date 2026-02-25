@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
-    Box, Typography, Chip, Select, MenuItem, ToggleButtonGroup, ToggleButton,
-    type SelectChangeEvent,
+    Box, Typography, Chip, Menu, MenuItem, IconButton,
 } from '@mui/material';
-import { GridView, ViewList, FilterList } from '@mui/icons-material';
+import { GridView, ViewList, FilterList, Sort } from '@mui/icons-material';
 import { StandardSearchInput } from '@som/ui';
 import {
     searchAtom,
@@ -12,6 +11,8 @@ import {
     sortAtom,
     viewAtom,
     facetCountAtom,
+    showFavoritesAtom,
+    favoritesAtom,
 } from '../../atoms/filterAtoms';
 import { CATEGORIES, SORT_OPTIONS, COLORS } from '../../data/categories';
 import { useRotatingHint } from '../../hooks/useRotatingHint';
@@ -27,8 +28,11 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
     const [category, setCategory] = useAtom(categoryAtom);
     const [sort, setSort] = useAtom(sortAtom);
     const [view, setView] = useAtom(viewAtom);
+    const [showFavorites, setShowFavorites] = useAtom(showFavoritesAtom);
+    const favorites = useAtomValue(favoritesAtom);
     const facetCount = useAtomValue(facetCountAtom);
     const [showFacets, setShowFacets] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const placeholder = useRotatingHint();
 
     return (
@@ -85,52 +89,114 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
                             />
                         );
                     })}
+                    <Chip
+                        label={`Saved ${favorites.length > 0 ? `(${favorites.length})` : ''}`}
+                        onClick={() => setShowFavorites(!showFavorites)}
+                        size="small"
+                        variant={showFavorites ? 'filled' : 'outlined'}
+                        sx={{
+                            cursor: 'pointer',
+                            ...(showFavorites && {
+                                bgcolor: 'text.primary',
+                                color: 'background.paper',
+                                borderColor: 'text.primary',
+                            }),
+                        }}
+                    />
                 </Box>
 
                 {/* Facet toggle */}
-                <Chip
-                    icon={<FilterList sx={{ fontSize: 14 }} />}
-                    label={`Filters${facetCount > 0 ? ` (${facetCount})` : ''}`}
+                <IconButton
+                    size="small"
                     onClick={() => setShowFacets(!showFacets)}
-                    size="small"
-                    variant={facetCount > 0 ? 'filled' : 'outlined'}
-                    sx={{ cursor: 'pointer' }}
-                />
-
-                {/* Sort */}
-                <Select
-                    value={sort}
-                    onChange={(e: SelectChangeEvent) => setSort(e.target.value as typeof SORT_OPTIONS[number])}
-                    size="small"
-                    variant="outlined"
                     sx={{
-                        fontSize: '11px',
-                        height: 28,
-                        '& .MuiSelect-select': { py: 0.5, px: 1.25 },
+                        bgcolor: facetCount > 0 || showFacets ? 'action.selected' : 'transparent',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        borderRadius: 1,
+                        p: 0.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                >
+                    <FilterList sx={{ fontSize: 18 }} />
+                </IconButton>
+
+                {/* Sort toggle */}
+                <IconButton
+                    size="small"
+                    onClick={(e) => setAnchorEl(e.currentTarget)}
+                    sx={{
+                        bgcolor: anchorEl ? 'action.selected' : 'transparent',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        borderRadius: 1,
+                        p: 0.5,
+                        '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                >
+                    <Sort sx={{ fontSize: 18 }} />
+                </IconButton>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={() => setAnchorEl(null)}
+                    PaperProps={{
+                        sx: { mt: 1, border: '1px solid', borderColor: 'divider', boxShadow: 3 }
                     }}
                 >
                     {SORT_OPTIONS.map((s) => (
-                        <MenuItem key={s} value={s} sx={{ fontSize: '11px' }}>{s}</MenuItem>
+                        <MenuItem
+                            key={s}
+                            selected={sort === s}
+                            onClick={() => {
+                                setSort(s as any);
+                                setAnchorEl(null);
+                            }}
+                            sx={{ fontSize: '0.875rem' }}
+                        >
+                            {s}
+                        </MenuItem>
                     ))}
-                </Select>
+                </Menu>
 
-                {/* View toggle */}
-                <ToggleButtonGroup
-                    value={view}
-                    exclusive
-                    onChange={(_, v) => v && setView(v)}
-                    size="small"
-                >
-                    <ToggleButton value="grid" sx={{ px: 1, py: 0.5 }}>
-                        <GridView sx={{ fontSize: 14 }} />
-                    </ToggleButton>
-                    <ToggleButton value="list" sx={{ px: 1, py: 0.5 }}>
-                        <ViewList sx={{ fontSize: 14 }} />
-                    </ToggleButton>
-                </ToggleButtonGroup>
+                {/* View toggles */}
+                <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+                    <IconButton
+                        size="small"
+                        onClick={() => setView('grid')}
+                        sx={{
+                            bgcolor: view === 'grid' ? 'action.selected' : 'transparent',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            color: view === 'grid' ? 'text.primary' : 'text.disabled',
+                            borderRadius: 1,
+                            p: 0.5,
+                            '&:hover': { bgcolor: 'action.hover' }
+                        }}
+                    >
+                        <GridView sx={{ fontSize: 18 }} />
+                    </IconButton>
+                    <IconButton
+                        size="small"
+                        onClick={() => setView('list')}
+                        sx={{
+                            bgcolor: view === 'list' ? 'action.selected' : 'transparent',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            color: view === 'list' ? 'text.primary' : 'text.disabled',
+                            borderRadius: 1,
+                            p: 0.5,
+                            '&:hover': { bgcolor: 'action.hover' }
+                        }}
+                    >
+                        <ViewList sx={{ fontSize: 18 }} />
+                    </IconButton>
+                </Box>
 
                 {/* Count */}
-                <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap' }}>
                     {total} results
                 </Typography>
             </Box>

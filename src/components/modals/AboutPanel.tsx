@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, Grid } from '@mui/material';
-import { StandardDialog, sectionLabelSx } from '@som/ui';
+import { StandardDialog, StandardPaper, sectionLabelSx } from '@som/ui';
 import { CATEGORIES, COLORS, CAT_INFO } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 import type { CategoryName } from '../../types';
@@ -38,13 +38,12 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
             <Grid container spacing={1} sx={{ mb: 3 }}>
                 {(CATEGORIES.filter((c) => c !== 'All') as CategoryName[]).map((c) => (
                     <Grid size={{ xs: 12, sm: 6 }} key={c}>
-                        <Box
+                        <StandardPaper
+                            bordered
+                            elevation={0}
                             sx={{
                                 bgcolor: 'action.hover',
-                                borderRadius: 1,
                                 p: 1.5,
-                                border: '1px solid',
-                                borderColor: 'divider',
                                 height: '100%'
                             }}
                         >
@@ -57,7 +56,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                 {CAT_INFO[c]?.slice(0, 100)}...
                             </Typography>
-                        </Box>
+                        </StandardPaper>
                     </Grid>
                 ))}
             </Grid>
@@ -74,7 +73,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="New" size="small" variant="outlined" color="success" sx={{ height: 16, fontSize: '8px', fontWeight: 700 }} />
+                    <Chip label="New" size="small" variant="outlined" color="success" sx={{ fontWeight: 700 }} />
                     <Typography variant="body2" color="text.secondary">
                         Resources added within the last 7 days.
                     </Typography>

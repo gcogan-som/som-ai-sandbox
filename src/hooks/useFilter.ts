@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
-import { searchAtom, categoryAtom, sortAtom, facetsAtom } from '../atoms/filterAtoms';
+import { searchAtom, categoryAtom, sortAtom, facetsAtom, showFavoritesAtom, favoritesAtom } from '../atoms/filterAtoms';
 import { ITEMS } from '../data/mockItems';
 import type { ResourceItem } from '../types';
 
@@ -9,10 +9,13 @@ export function useFilter() {
     const category = useAtomValue(categoryAtom);
     const sort = useAtomValue(sortAtom);
     const facets = useAtomValue(facetsAtom);
+    const showFavorites = useAtomValue(showFavoritesAtom);
+    const favorites = useAtomValue(favoritesAtom);
 
     const doFilter = useCallback(
         (items: ResourceItem[]) => {
             let r = [...items];
+            if (showFavorites) r = r.filter((i) => favorites.includes(i.id));
             if (category !== 'All') r = r.filter((i) => i.category === category);
             if (facets.tags.length)
                 r = r.filter((i) => facets.tags.some((t) => i.tags.includes(t)));
@@ -49,7 +52,7 @@ export function useFilter() {
             }
             return r;
         },
-        [category, sort, search, facets]
+        [category, sort, search, facets, showFavorites, favorites]
     );
 
     const useItems = useMemo(

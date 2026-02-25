@@ -5,16 +5,38 @@ import {
     Typography,
     Button,
     Paper,
-    alpha
+    alpha,
+    TextField,
+    Stack
 } from '@mui/material';
-import { ArrowUpward } from '@mui/icons-material';
-import { StandardDialog } from '@som/ui';
+import { ArrowUpward, Add } from '@mui/icons-material';
+import { StandardDialog, StandardSelect } from '@som/ui';
 import { requestsAtom, showReqAtom } from '../../atoms/modalAtoms';
+import { CATEGORIES, COLORS } from '../../data/categories';
+import { CatIcon } from '../shared/CatIcon';
+import type { CategoryName } from '../../types';
 
 export const RequestModal: React.FC = () => {
     const [requests, setRequests] = useAtom(requestsAtom);
     const [, setShowReq] = useAtom(showReqAtom);
+    const [newTitle, setNewTitle] = React.useState('');
+    const [newCategory, setNewCategory] = React.useState<CategoryName>('Gems');
     const onClose = () => setShowReq(false);
+
+    const addRequest = () => {
+        if (!newTitle.trim()) return;
+        const nextId = requests.length ? Math.max(...requests.map(r => r.id)) + 1 : 1;
+        setRequests([{
+            id: nextId,
+            title: newTitle.trim(),
+            category: newCategory,
+            author: 'You',
+            office: 'Local',
+            votes: 1,
+            date: new Date().toISOString().split('T')[0]
+        }, ...requests]);
+        setNewTitle('');
+    };
 
     const vote = (id: number) =>
         setRequests(requests.map((r) => (r.id === id ? { ...r, votes: r.votes + 1 } : r)));
@@ -25,12 +47,12 @@ export const RequestModal: React.FC = () => {
         <StandardDialog
             open={true}
             onClose={onClose}
-            title={`Requests (${requests.length})`}
+            title="Requests"
         >
             <Box
                 sx={{
-                    height: 3,
-                    background: 'linear-gradient(90deg,#6AADCF,#B494D0)',
+                    height: 2,
+                    bgcolor: 'text.primary',
                     mt: -2.5,
                     mx: -3,
                     mb: 2.5
@@ -42,45 +64,104 @@ export const RequestModal: React.FC = () => {
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {sorted.map((r) => (
-                    <Paper
-                        key={r.id}
-                        elevation={0}
-                        sx={{
-                            display: 'flex',
-                            gap: 1.5,
-                            alignItems: 'center',
-                            bgcolor: 'action.hover',
-                            borderRadius: 1,
-                            p: 1.5,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                        }}
-                    >
-                        <Button
-                            onClick={() => vote(r.id)}
-                            size="small"
-                            variant="outlined"
+                {sorted.map((r) => {
+                    const accentColor = COLORS[r.category];
+                    return (
+                        <Paper
+                            key={r.id}
+                            elevation={0}
                             sx={{
-                                minWidth: 40,
-                                p: 0.5,
-                                flexDirection: 'column',
-                                gap: 0.25,
-                                borderColor: alpha('#6AADCF', 0.2),
-                                color: '#6AADCF',
+                                display: 'flex',
+                                gap: 1.5,
+                                alignItems: 'center',
+                                bgcolor: 'action.hover',
+                                borderRadius: 1,
+                                p: 1.5,
+                                border: '1px solid',
+                                borderColor: 'divider',
                             }}
                         >
-                            <ArrowUpward sx={{ fontSize: 12 }} />
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', lineHeight: 1 }}>{r.votes}</Typography>
-                        </Button>
-                        <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle2" sx={{ lineHeight: 1.2, mb: 0.5 }}>{r.title}</Typography>
-                            <Typography variant="caption" color="text.disabled">
-                                Requested by {r.author} · {r.office}
-                            </Typography>
-                        </Box>
-                    </Paper>
-                ))}
+                            {/* Vote button - minimal styling */}
+                            <Button
+                                onClick={() => vote(r.id)}
+                                size="small"
+                                sx={{
+                                    minWidth: 40,
+                                    p: 0.5,
+                                    flexDirection: 'column',
+                                    gap: 0.25,
+                                    color: 'text.secondary',
+                                    borderRadius: 1,
+                                    '&:hover': {
+                                        bgcolor: 'action.selected',
+                                        color: 'text.primary',
+                                    }
+                                }}
+                            >
+                                <ArrowUpward sx={{ fontSize: 12 }} />
+                                <Typography variant="caption" sx={{ fontFamily: 'monospace', lineHeight: 1, fontWeight: 600 }}>{r.votes}</Typography>
+                            </Button>
+
+                            {/* Category Icon */}
+                            <Box
+                                sx={{
+                                    width: 32,
+                                    height: 32,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderRadius: 1,
+                                    bgcolor: alpha(accentColor, 0.1),
+                                    color: accentColor
+                                }}
+                            >
+                                <CatIcon category={r.category} size={16} />
+                            </Box>
+
+                            <Box sx={{ flex: 1 }}>
+                                <Typography variant="subtitle2" sx={{ lineHeight: 1.2, mb: 0.25 }}>{r.title}</Typography>
+                                <Typography variant="caption" color="text.disabled">
+                                    Requested by {r.author} · {r.office}
+                                </Typography>
+                            </Box>
+                        </Paper>
+                    );
+                })}
+            </Box>
+
+            <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                    <TextField
+                        fullWidth
+                        size="small"
+                        placeholder="What resource do you need?"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        sx={{ flex: 2 }}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                        <StandardSelect
+                            value={newCategory}
+                            onChange={(e: any) => setNewCategory(e.target.value as CategoryName)}
+                            options={CATEGORIES.filter(c => c !== 'All').map(c => ({ label: c, value: c }))}
+                        />
+                    </Box>
+                </Stack>
+                <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={addRequest}
+                    disabled={!newTitle.trim()}
+                    startIcon={<Add />}
+                    sx={{
+                        bgcolor: 'text.primary',
+                        color: 'background.paper',
+                        py: 1,
+                        '&:hover': { bgcolor: alpha('#000', 0.8) }
+                    }}
+                >
+                    Request
+                </Button>
             </Box>
         </StandardDialog>
     );

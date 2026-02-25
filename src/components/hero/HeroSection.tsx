@@ -24,14 +24,14 @@ export const HeroSection: React.FC = () => {
                     color: 'text.primary',
                 }}
             >
-                Collective Intelligence
+                AI Sandbox
             </Typography>
             <Typography
                 variant="subtitle1"
                 color="text.secondary"
                 sx={{ maxWidth: 460, lineHeight: 1.6, mb: 3 }}
             >
-                Discover and build on AI resources created across every office and discipline.
+                A playground to share how SOM is using ai, driving the car as we're building it.
             </Typography>
             <Box sx={{ display: 'flex', gap: 3.75 }}>
                 {stats.map((s) => (

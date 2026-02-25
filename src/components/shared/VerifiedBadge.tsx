@@ -5,7 +5,7 @@ export const VerifiedBadge: React.FC<{ size?: number }> = ({ size = 12 }) => (
     <Verified
         sx={{
             fontSize: size,
-            color: '#6AADCF', // SOM Blue for verified
+            color: 'text.secondary',
         }}
     />
 );

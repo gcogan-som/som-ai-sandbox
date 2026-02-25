@@ -1,8 +1,7 @@
 import React from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { Box, Typography, Grid } from '@mui/material';
-import { searchAtom, favoritesAtom } from '../atoms/filterAtoms';
-import { ITEMS } from '../data/mockItems';
+import { searchAtom, viewAtom } from '../atoms/filterAtoms';
 import {
     selectedItemAtom,
     showSubmitAtom,
@@ -20,15 +19,17 @@ import { ContributeModal } from '../components/modals/ContributeModal';
 import { RequestModal } from '../components/modals/RequestModal';
 import { AboutPanel } from '../components/modals/AboutPanel';
 
-const SecHead: React.FC<{ title: string; count: number; sub: string }> = ({ title, count, sub }) => (
-    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+import { Stack } from '@mui/material';
+
+export const SecHead: React.FC<{ title: string; count: number; sub?: string }> = ({ title, count }) => (
+    <Stack direction="row" alignItems="baseline" spacing={1}>
         <Typography variant="h2" component="h2" sx={{ fontSize: '1.25rem' }}>
             {title}
         </Typography>
-        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>
+        <Typography variant="caption" color="text.disabled">
             ({count})
         </Typography>
-    </Box>
+    </Stack>
 );
 
 export const AILibraryPage: React.FC = () => {
@@ -38,9 +39,8 @@ export const AILibraryPage: React.FC = () => {
     const showReq = useAtomValue(showReqAtom);
     const setSearch = useSetAtom(searchAtom);
 
+    const view = useAtomValue(viewAtom);
     const { useItems, learnItems, total } = useFilter();
-    const favorites = useAtomValue(favoritesAtom);
-    const favoriteItems = ITEMS.filter(i => favorites.includes(i.id));
 
     const handleAuthorClick = (author: string) => {
         setSearch(author);
@@ -52,37 +52,18 @@ export const AILibraryPage: React.FC = () => {
             <PopularSection onSelect={setSelected} />
             <LibraryFilterBar total={total} />
 
-            {/* Favorites Section */}
-            {favoriteItems.length > 0 && (
-                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
-                    <StandardAccordion
-                        defaultExpanded
-                        title={<SecHead title="Favorites" count={favoriteItems.length} sub="" />}
-                        subtitle="Your saved resources"
-                    >
-                        <Grid container spacing={1.25}>
-                            {favoriteItems.map((item, i) => (
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                                    <ResourceCard item={item} index={i} onClick={setSelected} />
-                                </Grid>
-                            ))}
-                        </Grid>
-                    </StandardAccordion>
-                </Box>
-            )}
-
             {/* Use Section */}
             {useItems.length > 0 && (
                 <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
                     <StandardAccordion
                         defaultExpanded
-                        title={<SecHead title="Use" count={useItems.length} sub="" />}
+                        title={<SecHead title="Resources" count={useItems.length} sub="" />}
                         subtitle="Tools, prompts, and workflows ready to use today"
                     >
-                        <Grid container spacing={1.25}>
+                        <Grid container spacing={view === 'grid' ? 1.25 : 0.5}>
                             {useItems.map((item, i) => (
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                                    <ResourceCard item={item} index={i} onClick={setSelected} />
+                                <Grid size={view === 'grid' ? { xs: 12, sm: 6, md: 4 } : { xs: 12 }} key={item.id}>
+                                    <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
                                 </Grid>
                             ))}
                         </Grid>
@@ -95,13 +76,13 @@ export const AILibraryPage: React.FC = () => {
                 <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
                     <StandardAccordion
                         defaultExpanded
-                        title={<SecHead title="Learn" count={learnItems.length} sub="" />}
+                        title={<SecHead title="Guides" count={learnItems.length} sub="" />}
                         subtitle="Case studies, tutorials, and methodology guides"
                     >
-                        <Grid container spacing={1.25}>
+                        <Grid container spacing={view === 'grid' ? 1.25 : 0.5}>
                             {learnItems.map((item, i) => (
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                                    <ResourceCard item={item} index={i} onClick={setSelected} />
+                                <Grid size={view === 'grid' ? { xs: 12, sm: 6, md: 4 } : { xs: 12 }} key={item.id}>
+                                    <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
                                 </Grid>
                             ))}
                         </Grid>

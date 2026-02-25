@@ -26,20 +26,18 @@ export const TagInput: React.FC<TagInputProps> = ({ tags, setTags }) => {
                 renderTags={(value: string[], getTagProps) =>
                     value.map((option: string, index: number) => (
                         <Chip
-                            variant="outlined"
                             label={option}
+                            size="small"
                             {...getTagProps({ index })}
                             sx={{
-                                height: 20,
-                                fontSize: '10px',
-                                fontFamily: 'monospace',
-                                bgcolor: alpha('#D4845A', 0.1),
-                                color: '#D4845A',
-                                borderColor: alpha('#D4845A', 0.2),
+                                border: 'none',
+                                bgcolor: 'action.hover',
+                                color: 'text.secondary',
+                                '& .MuiChip-label': { px: 0.75 },
                                 '& .MuiChip-deleteIcon': {
-                                    fontSize: 12,
-                                    color: alpha('#D4845A', 0.5),
-                                    '&:hover': { color: '#D4845A' }
+                                    fontSize: 14,
+                                    color: 'text.disabled',
+                                    '&:hover': { color: 'error.main' }
                                 }
                             }}
                         />
@@ -51,8 +49,7 @@ export const TagInput: React.FC<TagInputProps> = ({ tags, setTags }) => {
                         placeholder={tags.length === 0 ? "e.g. facade, parametric..." : ""}
                         sx={{
                             '& .MuiInputBase-root': {
-                                bgcolor: 'background.default',
-                                fontSize: '12px',
+                                bgcolor: 'background.paper',
                             }
                         }}
                     />

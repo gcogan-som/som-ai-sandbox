@@ -3,6 +3,7 @@ import type { SortOption, ViewMode, FacetFilters } from '../types';
 
 export const searchAtom = atom('');
 export const categoryAtom = atom<string>('All');
+export const showFavoritesAtom = atom<boolean>(false);
 export const sortAtom = atom<SortOption>('Trending');
 export const viewAtom = atom<ViewMode>('grid');
 export const facetsAtom = atom<FacetFilters>({

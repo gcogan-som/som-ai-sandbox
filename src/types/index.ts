@@ -20,11 +20,15 @@ export interface ResourceItem {
   verified: boolean;
   date: string;
   tips: Tip[];
+  primaryLink?: string;
+  supportingLinks?: string[];
+  supportingFiles?: { name: string; url: string }[];
 }
 
 export interface RequestItem {
   id: number;
   title: string;
+  category: CategoryName;
   author: string;
   office: string;
   votes: number;
