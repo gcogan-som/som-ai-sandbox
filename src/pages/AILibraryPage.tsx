@@ -1,12 +1,15 @@
 import React from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { searchAtom } from '../atoms/filterAtoms';
+import { Box, Typography, Grid } from '@mui/material';
+import { searchAtom, favoritesAtom } from '../atoms/filterAtoms';
+import { ITEMS } from '../data/mockItems';
 import {
     selectedItemAtom,
     showSubmitAtom,
     showAboutAtom,
     showReqAtom,
 } from '../atoms/modalAtoms';
+import { StandardAccordion } from '@som/ui';
 import { useFilter } from '../hooks/useFilter';
 import { HeroSection } from '../components/hero/HeroSection';
 import { LibraryFilterBar } from '../components/filters/LibraryFilterBar';
@@ -17,6 +20,17 @@ import { ContributeModal } from '../components/modals/ContributeModal';
 import { RequestModal } from '../components/modals/RequestModal';
 import { AboutPanel } from '../components/modals/AboutPanel';
 
+const SecHead: React.FC<{ title: string; count: number; sub: string }> = ({ title, count, sub }) => (
+    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+        <Typography variant="h2" component="h2" sx={{ fontSize: '1.25rem' }}>
+            {title}
+        </Typography>
+        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>
+            ({count})
+        </Typography>
+    </Box>
+);
+
 export const AILibraryPage: React.FC = () => {
     const [selected, setSelected] = useAtom(selectedItemAtom);
     const [showSubmit, setShowSubmit] = useAtom(showSubmitAtom);
@@ -25,132 +39,84 @@ export const AILibraryPage: React.FC = () => {
     const setSearch = useSetAtom(searchAtom);
 
     const { useItems, learnItems, total } = useFilter();
+    const favorites = useAtomValue(favoritesAtom);
+    const favoriteItems = ITEMS.filter(i => favorites.includes(i.id));
 
     const handleAuthorClick = (author: string) => {
         setSearch(author);
     };
 
-    const SecHead = ({
-        title,
-        count,
-        sub,
-    }: {
-        title: string;
-        count: number;
-        sub: string;
-    }) => (
-        <div style={{ marginBottom: 16, animation: 'fadeUp 0.4s ease both' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                <h2
-                    style={{
-                        fontSize: 22,
-                        fontWeight: 400,
-                        color: '#ddd',
-                        margin: 0,
-                        fontFamily: 'var(--serif)',
-                    }}
-                >
-                    {title}
-                </h2>
-                <span
-                    style={{
-                        fontSize: 12,
-                        color: '#333',
-                        fontFamily: 'var(--mono)',
-                    }}
-                >
-                    ({count})
-                </span>
-            </div>
-            <p
-                style={{
-                    fontSize: 12,
-                    color: '#444',
-                    margin: '3px 0 0',
-                    fontFamily: 'var(--sans)',
-                }}
-            >
-                {sub}
-            </p>
-        </div>
-    );
-
     return (
-        <div
-            style={{
-                maxWidth: 1360,
-                margin: '0 auto',
-                padding: '0 36px',
-            }}
-        >
+        <Box sx={{ maxWidth: 1360, mx: 'auto', px: { xs: 2, sm: 3, md: 4.5 } }}>
             <HeroSection />
             <PopularSection onSelect={setSelected} />
             <LibraryFilterBar total={total} />
 
+            {/* Favorites Section */}
+            {favoriteItems.length > 0 && (
+                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
+                    <StandardAccordion
+                        defaultExpanded
+                        title={<SecHead title="Favorites" count={favoriteItems.length} sub="" />}
+                        subtitle="Your saved resources"
+                    >
+                        <Grid container spacing={1.25}>
+                            {favoriteItems.map((item, i) => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                                    <ResourceCard item={item} index={i} onClick={setSelected} />
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </StandardAccordion>
+                </Box>
+            )}
+
             {/* Use Section */}
             {useItems.length > 0 && (
-                <section style={{ marginBottom: 36 }}>
-                    <SecHead
-                        title="Use"
-                        count={useItems.length}
-                        sub="Tools, prompts, and workflows ready to use today"
-                    />
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                            gap: 10,
-                        }}
+                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
+                    <StandardAccordion
+                        defaultExpanded
+                        title={<SecHead title="Use" count={useItems.length} sub="" />}
+                        subtitle="Tools, prompts, and workflows ready to use today"
                     >
-                        {useItems.map((item, i) => (
-                            <ResourceCard key={item.id} item={item} index={i} onClick={setSelected} />
-                        ))}
-                    </div>
-                </section>
+                        <Grid container spacing={1.25}>
+                            {useItems.map((item, i) => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                                    <ResourceCard item={item} index={i} onClick={setSelected} />
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </StandardAccordion>
+                </Box>
             )}
 
             {/* Learn Section */}
             {learnItems.length > 0 && (
-                <section style={{ marginBottom: 36 }}>
-                    <SecHead
-                        title="Learn"
-                        count={learnItems.length}
-                        sub="Case studies, tutorials, and methodology guides"
-                    />
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                            gap: 10,
-                        }}
+                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
+                    <StandardAccordion
+                        defaultExpanded
+                        title={<SecHead title="Learn" count={learnItems.length} sub="" />}
+                        subtitle="Case studies, tutorials, and methodology guides"
                     >
-                        {learnItems.map((item, i) => (
-                            <ResourceCard key={item.id} item={item} index={i} onClick={setSelected} />
-                        ))}
-                    </div>
-                </section>
+                        <Grid container spacing={1.25}>
+                            {learnItems.map((item, i) => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                                    <ResourceCard item={item} index={i} onClick={setSelected} />
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </StandardAccordion>
+                </Box>
             )}
 
-            {/* Empty */}
+            {/* Empty state */}
             {total === 0 && (
-                <div
-                    style={{
-                        textAlign: 'center',
-                        padding: '60px 0',
-                        animation: 'fadeUp 0.3s ease',
-                    }}
-                >
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>∅</div>
-                    <p
-                        style={{
-                            fontSize: 14,
-                            color: '#555',
-                            fontFamily: 'var(--sans)',
-                        }}
-                    >
+                <Box sx={{ textAlign: 'center', py: 8, animation: 'fadeUp 0.3s ease' }}>
+                    <Typography variant="h1" sx={{ mb: 1.5, opacity: 0.3 }}>∅</Typography>
+                    <Typography variant="body1" color="text.secondary">
                         No resources match your filters. Try adjusting your search.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
             )}
 
             {/* Modals */}
@@ -164,6 +130,6 @@ export const AILibraryPage: React.FC = () => {
             {showSubmit && <ContributeModal onClose={() => setShowSubmit(false)} />}
             {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
             {showReq && <RequestModal />}
-        </div>
+        </Box>
     );
 };

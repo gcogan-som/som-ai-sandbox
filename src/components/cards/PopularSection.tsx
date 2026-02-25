@@ -1,8 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Box, Typography } from '@mui/material';
 import { ITEMS } from '../../data/mockItems';
 import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 import { StarsDisplay } from '../shared/StarRating';
+import { StandardAccordion } from '@som/ui';
 import type { ResourceItem } from '../../types';
 
 interface PopularSectionProps {
@@ -11,7 +13,7 @@ interface PopularSectionProps {
 
 export const PopularSection: React.FC<PopularSectionProps> = ({ onSelect }) => {
     const offices = [...new Set(ITEMS.map((i) => i.office).filter((o) => o !== 'Firmwide'))];
-    const office = useMemo(() => offices[Math.floor(Math.random() * offices.length)], []);
+    const [office] = useState(() => offices[Math.floor(Math.random() * offices.length)]);
     const officeItems = useMemo(
         () =>
             ITEMS.filter((i) => i.office === office && i.kind === 'use')
@@ -23,90 +25,66 @@ export const PopularSection: React.FC<PopularSectionProps> = ({ onSelect }) => {
     if (officeItems.length === 0) return null;
 
     return (
-        <div style={{ marginBottom: 28 }}>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    marginBottom: 14,
-                }}
+        <Box sx={{ mb: 3.5, animation: 'fadeUp 0.4s ease both' }}>
+            <StandardAccordion
+                defaultExpanded
+                title={`Popular in ${office}`}
+                subtitle="Trending tools right now"
             >
-                <span
-                    style={{
-                        fontSize: 11,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        color: '#555',
-                        fontFamily: 'var(--sans)',
-                        fontWeight: 500,
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: 1,
+                        overflowX: 'auto',
+                        pb: 1,
+                        scrollSnapType: 'x mandatory',
+                        '&::-webkit-scrollbar': { height: 4 },
+                        '&::-webkit-scrollbar-thumb': { bgcolor: 'divider', borderRadius: 2 },
                     }}
                 >
-                    Popular in {office}
-                </span>
-            </div>
-            <div
-                style={{
-                    display: 'flex',
-                    gap: 8,
-                    overflowX: 'auto',
-                    paddingBottom: 8,
-                    scrollSnapType: 'x mandatory',
-                }}
-            >
-                {officeItems.map((item) => (
-                    <div
-                        key={item.id}
-                        onClick={() => onSelect(item)}
-                        style={{
-                            flexShrink: 0,
-                            width: 240,
-                            background: '#131313',
-                            border: '1px solid #1a1a1a',
-                            borderRadius: 11,
-                            padding: '14px 16px',
-                            cursor: 'pointer',
-                            scrollSnapAlign: 'start',
-                            transition: 'border-color 0.15s',
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#262626')}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1a1a1a')}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                            <CatIcon category={item.category} size={12} />
-                            <span
-                                style={{
-                                    fontSize: 9,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    color: COLORS[item.category],
-                                    fontFamily: 'var(--sans)',
-                                }}
-                            >
-                                {item.category}
-                            </span>
-                        </div>
-                        <div
-                            style={{
-                                fontSize: 13.5,
-                                fontWeight: 400,
-                                color: '#ddd',
-                                fontFamily: 'var(--serif)',
-                                lineHeight: 1.25,
-                                marginBottom: 6,
+                    {officeItems.map((item) => (
+                        <Box
+                            key={item.id}
+                            onClick={() => onSelect(item)}
+                            sx={{
+                                flexShrink: 0,
+                                width: 240,
+                                bgcolor: 'background.paper',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                                p: 1.75,
+                                cursor: 'pointer',
+                                scrollSnapAlign: 'start',
+                                transition: 'all 0.15s ease',
+                                '&:hover': {
+                                    bgcolor: 'action.hover',
+                                    borderColor: 'text.disabled',
+                                },
                             }}
                         >
-                            {item.title}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <StarsDisplay rating={item.rating} size={8} />
-                            <span style={{ fontSize: 9, color: '#444', fontFamily: 'var(--mono)' }}>
-                                {item.uses} uses
-                            </span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+                                <CatIcon category={item.category} size={12} />
+                                <Typography
+                                    variant="overline"
+                                    sx={{ color: COLORS[item.category], letterSpacing: '0.1em', lineHeight: 1 }}
+                                >
+                                    {item.category}
+                                </Typography>
+                            </Box>
+                            <Typography variant="h5" sx={{ fontWeight: 400, lineHeight: 1.25, mb: 0.75 }}>
+                                {item.title}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <StarsDisplay rating={item.rating} size={8} />
+                                <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>
+                                    {item.uses} uses
+                                </Typography>
+                            </Box>
+                        </Box>
+                    ))}
+                </Box>
+            </StandardAccordion>
+        </Box>
     );
 };

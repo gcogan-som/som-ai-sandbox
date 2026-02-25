@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import { sectionLabelSx } from '@som/ui';
 import { ITEMS } from '../../data/mockItems';
 
 export const HeroSection: React.FC = () => {
@@ -11,59 +12,40 @@ export const HeroSection: React.FC = () => {
     ];
 
     return (
-        <Box component="section" sx={{ pt: '46px', pb: '30px', animation: 'slideDown 0.5s ease' }}>
+        <Box component="section" sx={{ pt: 5.75, pb: 3.75, animation: 'slideDown 0.5s ease' }}>
             <Typography
                 variant="h1"
                 sx={{
-                    fontSize: 44,
-                    fontWeight: 400,
-                    m: '0 0 8px',
-                    fontFamily: 'var(--serif)',
+                    fontSize: { xs: 32, md: 44 },
+                    fontWeight: 300,
+                    mb: 1,
                     lineHeight: 1.08,
                     letterSpacing: '-0.03em',
-                    background: 'linear-gradient(140deg, #eee 0%, #666 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    color: 'text.primary',
                 }}
             >
                 Collective Intelligence
             </Typography>
             <Typography
-                sx={{
-                    fontSize: 14,
-                    color: '#555',
-                    maxWidth: 460,
-                    lineHeight: 1.6,
-                    m: '0 0 24px',
-                    fontFamily: 'var(--sans)',
-                }}
+                variant="subtitle1"
+                color="text.secondary"
+                sx={{ maxWidth: 460, lineHeight: 1.6, mb: 3 }}
             >
                 Discover and build on AI resources created across every office and discipline.
             </Typography>
-            <Box sx={{ display: 'flex', gap: '30px' }}>
+            <Box sx={{ display: 'flex', gap: 3.75 }}>
                 {stats.map((s) => (
                     <Box key={s.l}>
-                        <Box
-                            sx={{
-                                fontSize: 23,
-                                fontWeight: 300,
-                                fontFamily: 'var(--serif)',
-                                color: '#ddd',
-                            }}
-                        >
+                        <Typography variant="h2" sx={{ fontWeight: 300, letterSpacing: '-0.02em' }}>
                             {s.v}
-                        </Box>
-                        <Box
-                            sx={{
-                                fontSize: 9,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.12em',
-                                color: '#555',
-                                mt: '1px',
-                            }}
+                        </Typography>
+                        <Typography
+                            variant="overline"
+                            color="text.disabled"
+                            sx={{ ...sectionLabelSx, display: 'block', mt: 0.25 }}
                         >
                             {s.l}
-                        </Box>
+                        </Typography>
                     </Box>
                 ))}
             </Box>

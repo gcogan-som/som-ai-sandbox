@@ -1,4 +1,6 @@
 import React from 'react';
+import { Box, Typography, Chip, Grid } from '@mui/material';
+import { StandardDialog, sectionLabelSx } from '@som/ui';
 import { CATEGORIES, COLORS, CAT_INFO } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 import type { CategoryName } from '../../types';
@@ -9,208 +11,75 @@ interface AboutPanelProps {
 
 export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
     return (
-        <div
-            style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 1000,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(0,0,0,0.7)',
-                backdropFilter: 'blur(16px)',
-                animation: 'fadeIn 0.2s ease',
-            }}
-            onClick={onClose}
+        <StandardDialog
+            open={true}
+            onClose={onClose}
+            title="About AI Library"
         >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    background: '#131313',
-                    borderRadius: 18,
-                    maxWidth: 620,
-                    width: '92%',
-                    border: '1px solid #262626',
-                    overflow: 'hidden',
-                    animation: 'slideUp 0.3s ease',
-                    maxHeight: '88vh',
-                    overflowY: 'auto',
+            <Box
+                sx={{
+                    height: 3,
+                    background: 'linear-gradient(90deg,#D4845A,#6AADCF,#CBAA5E,#E07BA0,#B494D0,#8BC78A)',
+                    mt: -2.5,
+                    mx: -3,
+                    mb: 2.5
                 }}
-            >
-                <div
-                    style={{
-                        height: 3,
-                        background:
-                            'linear-gradient(90deg,#D4845A,#6AADCF,#CBAA5E,#E07BA0,#B494D0,#8BC78A)',
-                    }}
-                />
-                <div style={{ padding: '28px 32px 32px' }}>
-                    <div
-                        style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            marginBottom: 20,
-                        }}
-                    >
-                        <h2
-                            style={{
-                                fontSize: 24,
-                                fontWeight: 400,
-                                color: '#eee',
-                                margin: 0,
-                                fontFamily: 'var(--serif)',
+            />
+
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.7 }}>
+                A shared collection of AI tools, prompts, and workflows created by people across every
+                office and discipline. Built by the firm, for the firm.
+            </Typography>
+
+            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 2 }}>
+                Resource Types
+            </Typography>
+
+            <Grid container spacing={1} sx={{ mb: 3 }}>
+                {(CATEGORIES.filter((c) => c !== 'All') as CategoryName[]).map((c) => (
+                    <Grid size={{ xs: 12, sm: 6 }} key={c}>
+                        <Box
+                            sx={{
+                                bgcolor: 'action.hover',
+                                borderRadius: 1,
+                                p: 1.5,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                height: '100%'
                             }}
                         >
-                            AI Library
-                        </h2>
-                        <button
-                            onClick={onClose}
-                            style={{
-                                background: '#1a1a1a',
-                                border: '1px solid #262626',
-                                borderRadius: 7,
-                                width: 32,
-                                height: 32,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                color: '#666',
-                                fontSize: 16,
-                            }}
-                        >
-                            ×
-                        </button>
-                    </div>
-                    <p
-                        style={{
-                            fontSize: 13.5,
-                            color: '#888',
-                            lineHeight: 1.65,
-                            margin: '0 0 24px',
-                            fontFamily: 'var(--sans)',
-                        }}
-                    >
-                        A shared collection of AI tools, prompts, and workflows created by people across every
-                        office and discipline. Built by the firm, for the firm.
-                    </p>
-                    <h3
-                        style={{
-                            fontSize: 11,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            color: '#666',
-                            fontFamily: 'var(--sans)',
-                            fontWeight: 500,
-                            marginBottom: 14,
-                        }}
-                    >
-                        Resource Types
-                    </h3>
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: 6,
-                            marginBottom: 20,
-                        }}
-                    >
-                        {(CATEGORIES.filter((c) => c !== 'All') as CategoryName[]).map((c) => (
-                            <div
-                                key={c}
-                                style={{
-                                    background: '#161616',
-                                    borderRadius: 10,
-                                    padding: '12px 14px',
-                                    border: '1px solid #1e1e1e',
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 7,
-                                        marginBottom: 6,
-                                    }}
-                                >
-                                    <CatIcon category={c} size={14} />
-                                    <span
-                                        style={{
-                                            fontSize: 12,
-                                            color: COLORS[c],
-                                            fontFamily: 'var(--sans)',
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {c}
-                                    </span>
-                                </div>
-                                <p
-                                    style={{
-                                        fontSize: 11,
-                                        color: '#555',
-                                        lineHeight: 1.5,
-                                        margin: 0,
-                                        fontFamily: 'var(--sans)',
-                                    }}
-                                >
-                                    {CAT_INFO[c]?.slice(0, 100)}...
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                    <h3
-                        style={{
-                            fontSize: 11,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            color: '#666',
-                            fontFamily: 'var(--sans)',
-                            fontWeight: 500,
-                            marginBottom: 8,
-                        }}
-                    >
-                        Badges
-                    </h3>
-                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="#6AADCF"
-                                stroke="none"
-                            >
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span style={{ fontSize: 11, color: '#888', fontFamily: 'var(--sans)' }}>
-                                Verified — reviewed by the AI Committee
-                            </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <span
-                                style={{
-                                    fontSize: 8,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.1em',
-                                    padding: '2px 5px',
-                                    borderRadius: 3,
-                                    background: 'rgba(138,188,138,0.12)',
-                                    color: '#8BC78A',
-                                    fontFamily: 'var(--sans)',
-                                    fontWeight: 600,
-                                }}
-                            >
-                                New
-                            </span>
-                            <span style={{ fontSize: 11, color: '#888', fontFamily: 'var(--sans)' }}>
-                                Added within the last 7 days
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                <CatIcon category={c} size={14} />
+                                <Typography variant="subtitle2" sx={{ color: COLORS[c] }}>
+                                    {c}
+                                </Typography>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                {CAT_INFO[c]?.slice(0, 100)}...
+                            </Typography>
+                        </Box>
+                    </Grid>
+                ))}
+            </Grid>
+
+            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 1.5 }}>
+                Badges
+            </Typography>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="span" sx={{ color: 'info.main', fontSize: 16 }}>🛡️</Box>
+                    <Typography variant="body2" color="text.secondary">
+                        <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>Verified</Box> — reviewed by the AI Committee for quality and safety.
+                    </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="New" size="small" variant="outlined" color="success" sx={{ height: 16, fontSize: '8px', fontWeight: 700 }} />
+                    <Typography variant="body2" color="text.secondary">
+                        Resources added within the last 7 days.
+                    </Typography>
+                </Box>
+            </Box>
+        </StandardDialog>
     );
 };

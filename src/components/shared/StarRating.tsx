@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
+import { Star, StarOutline, StarHalf } from '@mui/icons-material';
 
 interface StarsDisplayProps {
     rating: number;
@@ -8,39 +9,32 @@ interface StarsDisplayProps {
 
 export const StarsDisplay: React.FC<StarsDisplayProps> = ({ rating, size = 11 }) => {
     const full = Math.floor(rating);
-    const frac = rating - full;
+    const half = rating - full >= 0.5;
+
     return (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
             {[...Array(5)].map((_, i) => {
-                const fill = i < full ? 1 : i === full ? frac : 0;
-                const id = `star-${i}-${rating}`;
-                return (
-                    <svg key={i} width={size} height={size} viewBox="0 0 20 20">
-                        <defs>
-                            <linearGradient id={id}>
-                                <stop offset={`${fill * 100}%`} stopColor="#D4845A" />
-                                <stop offset={`${fill * 100}%`} stopColor="#2a2a2a" />
-                            </linearGradient>
-                        </defs>
-                        <path
-                            d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.49L10 14.27 5.06 16.7 6 11.21l-4-3.9 5.53-.8z"
-                            fill={`url(#${id})`}
-                        />
-                    </svg>
-                );
+                const active = i < full || (i === full && half);
+                const sx = {
+                    fontSize: size,
+                    color: active ? 'text.primary' : 'text.disabled',
+                };
+                if (i < full) return <Star key={i} sx={sx} />;
+                if (i === full && half) return <StarHalf key={i} sx={sx} />;
+                return <StarOutline key={i} sx={sx} />;
             })}
-            <span
-                style={{
-                    marginLeft: 4,
+            <Typography
+                variant="caption"
+                sx={{
+                    ml: 0.5,
                     fontSize: size - 1,
-                    color: '#777',
-                    fontVariantNumeric: 'tabular-nums',
-                    fontFamily: 'var(--sans)',
+                    color: 'text.secondary',
+                    fontFamily: 'monospace',
                 }}
             >
                 {rating.toFixed(1)}
-            </span>
-        </span>
+            </Typography>
+        </Box>
     );
 };
 
@@ -55,54 +49,49 @@ export const InteractiveRating: React.FC<InteractiveRatingProps> = ({ onRate, us
     return (
         <Box
             sx={{
-                background: '#151515',
-                borderRadius: '10px',
-                padding: '12px 16px',
-                border: '1px solid #1e1e1e',
-                mb: '20px',
+                bgcolor: 'action.hover',
+                borderRadius: 1,
+                p: 1.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                mb: 2.5,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: 1.5,
             }}
         >
-            <span
-                style={{
-                    fontSize: 9.5,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: '#555',
-                    fontFamily: 'var(--sans)',
-                }}
-            >
+            <Typography variant="overline" color="text.disabled" sx={{ fontWeight: 600 }}>
                 Rate
-            </span>
-            {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                    key={s}
-                    onMouseEnter={() => setHoverStar(s)}
-                    onMouseLeave={() => setHoverStar(0)}
-                    onClick={() => onRate(s)}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 1,
-                        transition: 'transform 0.12s',
-                        transform: hoverStar >= s || userRating >= s ? 'scale(1.1)' : 'scale(1)',
-                    }}
-                >
-                    <svg width="18" height="18" viewBox="0 0 20 20">
-                        <path
-                            d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.49L10 14.27 5.06 16.7 6 11.21l-4-3.9 5.53-.8z"
-                            fill={hoverStar >= s || userRating >= s ? '#D4845A' : '#1e1e1e'}
-                            stroke={hoverStar >= s || userRating >= s ? '#D4845A' : '#333'}
-                            strokeWidth="0.5"
-                        />
-                    </svg>
-                </button>
-            ))}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                {[1, 2, 3, 4, 5].map((s) => {
+                    const active = hoverStar >= s || userRating >= s;
+                    return (
+                        <IconButton
+                            key={s}
+                            onMouseEnter={() => setHoverStar(s)}
+                            onMouseLeave={() => setHoverStar(0)}
+                            onClick={() => onRate(s)}
+                            size="small"
+                            sx={{
+                                p: 0.25,
+                                color: active ? 'text.primary' : 'text.disabled',
+                                transition: 'transform 0.1s ease',
+                                '&:hover': { transform: 'scale(1.1)', bgcolor: 'transparent' }
+                            }}
+                        >
+                            {active
+                                ? <Star sx={{ fontSize: 18 }} />
+                                : <StarOutline sx={{ fontSize: 18 }} />
+                            }
+                        </IconButton>
+                    );
+                })}
+            </Box>
             {userRating > 0 && (
-                <span style={{ fontSize: 11.5, color: '#D4845A', fontFamily: 'var(--sans)' }}>Thanks!</span>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    Thanks!
+                </Typography>
             )}
         </Box>
     );

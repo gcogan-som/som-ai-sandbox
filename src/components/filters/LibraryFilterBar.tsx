@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
+    Box, Typography, Chip, Select, MenuItem, ToggleButtonGroup, ToggleButton,
+    type SelectChangeEvent,
+} from '@mui/material';
+import { GridView, ViewList, FilterList } from '@mui/icons-material';
+import { StandardSearchInput } from '@som/ui';
+import {
     searchAtom,
     categoryAtom,
     sortAtom,
@@ -26,223 +32,111 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
     const placeholder = useRotatingHint();
 
     return (
-        <div style={{ position: 'relative', marginBottom: 20 }}>
+        <Box sx={{ position: 'relative', mb: 2.5 }}>
             {/* Search */}
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-                <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#444"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }}
-                >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={placeholder}
-                    style={{
-                        width: '100%',
-                        background: '#151515',
-                        border: '1px solid #1e1e1e',
-                        borderRadius: 11,
-                        padding: '10px 14px 10px 38px',
-                        color: '#ccc',
-                        fontSize: 13,
-                        fontFamily: 'var(--sans)',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        transition: 'border-color 0.15s',
-                    }}
-                    onFocus={(e) => (e.currentTarget.style.borderColor = '#333')}
-                    onBlur={(e) => (e.currentTarget.style.borderColor = '#1e1e1e')}
-                />
-            </div>
+            <StandardSearchInput
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+                placeholder={placeholder}
+                sx={{ mb: 1.5 }}
+                fullWidth
+            />
 
-            {/* Category pills + controls row */}
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    flexWrap: 'wrap',
-                }}
-            >
-                {/* Category pills */}
-                <div
-                    style={{
-                        display: 'flex', gap: 3, flex: 1, flexWrap: 'wrap',
-                    }}
-                >
+            {/* Controls row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                {/* Category chips */}
+                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, flexWrap: 'wrap' }}>
                     {CATEGORIES.map((c) => {
                         const active = category === c;
+                        const accentColor = c !== 'All' ? COLORS[c as CategoryName] : undefined;
                         return (
-                            <button
+                            <Chip
                                 key={c}
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        {c !== 'All' && (
+                                            <Box
+                                                component="span"
+                                                sx={{
+                                                    width: 6,
+                                                    height: 6,
+                                                    borderRadius: '50%',
+                                                    bgcolor: accentColor,
+                                                    opacity: active ? 1 : 0.4,
+                                                    display: 'inline-block',
+                                                }}
+                                            />
+                                        )}
+                                        {c}
+                                    </Box>
+                                }
                                 onClick={() => setCategory(c)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 5,
-                                    padding: '5px 11px',
-                                    borderRadius: 100,
-                                    border: `1px solid ${active ? (c === 'All' ? '#555' : COLORS[c as CategoryName] + '55') : '#262626'}`,
-                                    background: active
-                                        ? c === 'All'
-                                            ? 'rgba(255,255,255,0.05)'
-                                            : `${COLORS[c as CategoryName]}12`
-                                        : 'transparent',
-                                    color: active ? (c === 'All' ? '#ccc' : COLORS[c as CategoryName]) : '#555',
-                                    fontSize: 11,
-                                    fontFamily: 'var(--sans)',
+                                size="small"
+                                variant={active ? 'filled' : 'outlined'}
+                                sx={{
                                     cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                    whiteSpace: 'nowrap',
+                                    ...(active && accentColor ? {
+                                        bgcolor: `${accentColor}18`,
+                                        borderColor: `${accentColor}55`,
+                                        color: accentColor,
+                                    } : {}),
                                 }}
-                            >
-                                {c !== 'All' && (
-                                    <span
-                                        style={{
-                                            width: 6,
-                                            height: 6,
-                                            borderRadius: '50%',
-                                            background: COLORS[c as CategoryName],
-                                            opacity: active ? 1 : 0.3,
-                                        }}
-                                    />
-                                )}
-                                {c}
-                            </button>
+                            />
                         );
                     })}
-                </div>
+                </Box>
 
                 {/* Facet toggle */}
-                <button
+                <Chip
+                    icon={<FilterList sx={{ fontSize: 14 }} />}
+                    label={`Filters${facetCount > 0 ? ` (${facetCount})` : ''}`}
                     onClick={() => setShowFacets(!showFacets)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        padding: '5px 11px',
-                        borderRadius: 100,
-                        border: `1px solid ${facetCount > 0 ? '#D4845A55' : '#262626'}`,
-                        background: facetCount > 0 ? 'rgba(212,132,90,0.06)' : 'transparent',
-                        color: facetCount > 0 ? '#D4845A' : '#555',
-                        fontSize: 11,
-                        fontFamily: 'var(--sans)',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
-                    <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                    >
-                        <line x1="4" y1="6" x2="20" y2="6" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                        <line x1="11" y1="18" x2="13" y2="18" />
-                    </svg>
-                    Filters{facetCount > 0 ? ` (${facetCount})` : ''}
-                </button>
+                    size="small"
+                    variant={facetCount > 0 ? 'filled' : 'outlined'}
+                    sx={{ cursor: 'pointer' }}
+                />
 
                 {/* Sort */}
-                <select
+                <Select
                     value={sort}
-                    onChange={(e) => setSort(e.target.value as any)}
-                    style={{
-                        background: '#151515',
-                        border: '1px solid #262626',
-                        borderRadius: 100,
-                        padding: '5px 11px',
-                        color: '#777',
-                        fontSize: 11,
-                        fontFamily: 'var(--sans)',
-                        outline: 'none',
-                        cursor: 'pointer',
+                    onChange={(e: SelectChangeEvent) => setSort(e.target.value as typeof SORT_OPTIONS[number])}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                        fontSize: '11px',
+                        height: 28,
+                        '& .MuiSelect-select': { py: 0.5, px: 1.25 },
                     }}
                 >
                     {SORT_OPTIONS.map((s) => (
-                        <option key={s} value={s}>
-                            {s}
-                        </option>
+                        <MenuItem key={s} value={s} sx={{ fontSize: '11px' }}>{s}</MenuItem>
                     ))}
-                </select>
+                </Select>
 
                 {/* View toggle */}
-                <div
-                    style={{
-                        display: 'flex',
-                        background: '#151515',
-                        borderRadius: 100,
-                        border: '1px solid #262626',
-                        overflow: 'hidden',
-                    }}
+                <ToggleButtonGroup
+                    value={view}
+                    exclusive
+                    onChange={(_, v) => v && setView(v)}
+                    size="small"
                 >
-                    {(['grid', 'list'] as const).map((v) => (
-                        <button
-                            key={v}
-                            onClick={() => setView(v)}
-                            style={{
-                                padding: '5px 9px',
-                                background: view === v ? '#1e1e1e' : 'transparent',
-                                border: 'none',
-                                color: view === v ? '#ccc' : '#444',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                            }}
-                        >
-                            {v === 'grid' ? (
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                                    <rect x="3" y="14" width="7" height="7" rx="1" />
-                                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                                </svg>
-                            ) : (
-                                <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                >
-                                    <line x1="3" y1="6" x2="21" y2="6" />
-                                    <line x1="3" y1="12" x2="21" y2="12" />
-                                    <line x1="3" y1="18" x2="21" y2="18" />
-                                </svg>
-                            )}
-                        </button>
-                    ))}
-                </div>
+                    <ToggleButton value="grid" sx={{ px: 1, py: 0.5 }}>
+                        <GridView sx={{ fontSize: 14 }} />
+                    </ToggleButton>
+                    <ToggleButton value="list" sx={{ px: 1, py: 0.5 }}>
+                        <ViewList sx={{ fontSize: 14 }} />
+                    </ToggleButton>
+                </ToggleButtonGroup>
 
                 {/* Count */}
-                <span
-                    style={{
-                        fontSize: 10.5,
-                        color: '#444',
-                        fontFamily: 'var(--mono)',
-                        whiteSpace: 'nowrap',
-                    }}
-                >
+                <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                     {total} results
-                </span>
-            </div>
+                </Typography>
+            </Box>
 
             {/* Facet panel */}
             {showFacets && <FacetPanel onClose={() => setShowFacets(false)} />}
-        </div>
+        </Box>
     );
 };

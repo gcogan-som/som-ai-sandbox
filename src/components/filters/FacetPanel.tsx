@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { useAtom } from 'jotai';
+import { Box, Typography, Chip, Button, Paper } from '@mui/material';
+import { sectionLabelSx } from '@som/ui';
 import { facetsAtom } from '../../atoms/filterAtoms';
 import { ITEMS } from '../../data/mockItems';
 import type { FacetFilters } from '../../types';
@@ -36,7 +38,7 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
 
     const ct = Object.values(filters).reduce((s, a) => s + a.length, 0);
 
-    const Section = ({
+    const renderSection = ({
         title,
         data,
         filterKey,
@@ -45,123 +47,80 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
         data: [string, number][];
         filterKey: keyof FacetFilters;
     }) => (
-        <div style={{ marginBottom: 12 }}>
-            <div
-                style={{
-                    fontSize: 9,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    color: '#444',
-                    fontFamily: 'var(--sans)',
-                    marginBottom: 6,
-                }}
-            >
+        <Box sx={{ mb: 1.5 }}>
+            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 0.75 }}>
                 {title}
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {data.map(([v, c]) => {
                     const active = filters[filterKey].includes(v);
                     return (
-                        <button
+                        <Chip
                             key={v}
+                            label={`${v} (${c})`}
                             onClick={() => toggle(filterKey, v)}
-                            style={{
-                                fontSize: 10.5,
-                                padding: '3px 9px',
-                                borderRadius: 100,
-                                border: `1px solid ${active ? '#D4845A55' : '#262626'}`,
-                                background: active ? 'rgba(212,132,90,0.08)' : 'transparent',
-                                color: active ? '#D4845A' : '#666',
-                                cursor: 'pointer',
-                                fontFamily: 'var(--sans)',
-                                transition: 'all 0.12s',
-                            }}
-                        >
-                            {v}
-                            <span style={{ fontSize: 9, color: '#444', marginLeft: 3 }}>({c})</span>
-                        </button>
+                            size="small"
+                            variant={active ? 'filled' : 'outlined'}
+                            sx={{ cursor: 'pointer', fontSize: '10px' }}
+                        />
                     );
                 })}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 
     return (
-        <div
+        <Paper
             ref={ref}
-            style={{
+            elevation={0}
+            sx={{
                 position: 'absolute',
                 top: '100%',
                 left: 0,
                 right: 0,
-                marginTop: 6,
-                background: '#151515',
-                border: '1px solid #262626',
-                borderRadius: 13,
-                padding: '18px 20px',
+                mt: 0.75,
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                p: 2.25,
                 zIndex: 50,
-                boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
                 animation: 'fadeUp 0.2s ease',
             }}
         >
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 14,
-                }}
-            >
-                <span
-                    style={{
-                        fontSize: 12.5,
-                        color: '#ccc',
-                        fontFamily: 'var(--sans)',
-                        fontWeight: 500,
-                    }}
-                >
-                    Filters
-                </span>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75 }}>
+                <Typography variant="h5">Filters</Typography>
                 {ct > 0 && (
-                    <button
-                        onClick={() =>
-                            setFilters({ tags: [], offices: [], disciplines: [], authors: [] })
-                        }
-                        style={{
-                            fontSize: 10.5,
-                            background: 'rgba(212,132,90,0.08)',
-                            border: '1px solid rgba(212,132,90,0.2)',
-                            borderRadius: 100,
-                            padding: '2px 10px',
-                            color: '#D4845A',
-                            cursor: 'pointer',
-                            fontFamily: 'var(--sans)',
-                        }}
+                    <Button
+                        size="small"
+                        variant="text"
+                        onClick={() => setFilters({ tags: [], offices: [], disciplines: [], authors: [] })}
+                        sx={{ fontSize: '10px', color: 'text.secondary' }}
                     >
                         Clear all ({ct})
-                    </button>
+                    </Button>
                 )}
-            </div>
-            <Section
-                title="Discipline"
-                data={allDisc.map((d) => [d, items.filter((i) => i.discipline === d).length])}
-                filterKey="disciplines"
-            />
-            <Section
-                title="Office"
-                data={allOffice.map((o) => [o, items.filter((i) => i.office === o).length])}
-                filterKey="offices"
-            />
-            <Section
-                title="Author"
-                data={allAuthors.map((a) => [a, items.filter((i) => i.author === a).length])}
-                filterKey="authors"
-            />
-            <Section
-                title="Tags"
-                data={allTags.map((t) => [t, items.filter((i) => i.tags.includes(t)).length])}
-                filterKey="tags"
-            />
-        </div>
+            </Box>
+            {renderSection({
+                title: "Discipline",
+                data: allDisc.map((d) => [d, items.filter((i) => i.discipline === d).length]),
+                filterKey: "disciplines"
+            })}
+            {renderSection({
+                title: "Office",
+                data: allOffice.map((o) => [o, items.filter((i) => i.office === o).length]),
+                filterKey: "offices"
+            })}
+            {renderSection({
+                title: "Author",
+                data: allAuthors.map((a) => [a, items.filter((i) => i.author === a).length]),
+                filterKey: "authors"
+            })}
+            {renderSection({
+                title: "Tags",
+                data: allTags.map((t) => [t, items.filter((i) => i.tags.includes(t)).length]),
+                filterKey: "tags"
+            })}
+        </Paper>
     );
 };
