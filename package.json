@@ -16,7 +16,7 @@
     "@mui/material": "^7.3.8",
     "@react-oauth/google": "^0.13.4",
     "@som/dev-shell": "file:../som-dev-shell",
-    "@som/ui": "github:gcogan-som/som-ui",
+    "@som/ui": "file:../som-ui",
     "firebase": "^12.9.0",
     "framer-motion": "^12.34.3",
     "jotai": "^2.18.0",
