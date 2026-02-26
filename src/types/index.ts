@@ -5,7 +5,7 @@ export interface Tip {
 }
 
 export interface ResourceItem {
-  id: number;
+  id: string | number;
   title: string;
   kind: 'use' | 'learn';
   category: 'Gems' | 'Prompts' | 'AI Studio' | 'Krea' | 'Notebooks' | 'Workflows';
@@ -23,10 +23,11 @@ export interface ResourceItem {
   primaryLink?: string;
   supportingLinks?: string[];
   supportingFiles?: { name: string; url: string }[];
+  prompt?: string;
 }
 
 export interface RequestItem {
-  id: number;
+  id: string | number;
   title: string;
   category: CategoryName;
   author: string;

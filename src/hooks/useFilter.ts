@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useAtomValue } from 'jotai';
 import { searchAtom, categoryAtom, sortAtom, facetsAtom, showFavoritesAtom, favoritesAtom } from '../atoms/filterAtoms';
-import { ITEMS } from '../data/mockItems';
+import { activeItemsAtom } from '../atoms/appAtoms';
 import type { ResourceItem } from '../types';
 
 export function useFilter() {
@@ -11,6 +11,7 @@ export function useFilter() {
     const facets = useAtomValue(facetsAtom);
     const showFavorites = useAtomValue(showFavoritesAtom);
     const favorites = useAtomValue(favoritesAtom);
+    const activeItems = useAtomValue(activeItemsAtom);
 
     const doFilter = useCallback(
         (items: ResourceItem[]) => {
@@ -56,12 +57,12 @@ export function useFilter() {
     );
 
     const useItems = useMemo(
-        () => doFilter(ITEMS.filter((i) => i.kind === 'use')),
-        [doFilter]
+        () => doFilter(activeItems.filter((i) => i.kind === 'use')),
+        [doFilter, activeItems]
     );
     const learnItems = useMemo(
-        () => doFilter(ITEMS.filter((i) => i.kind === 'learn')),
-        [doFilter]
+        () => doFilter(activeItems.filter((i) => i.kind === 'learn')),
+        [doFilter, activeItems]
     );
 
     return { useItems, learnItems, total: useItems.length + learnItems.length };

@@ -8,7 +8,8 @@ import { VerifiedBadge } from '../shared/VerifiedBadge';
 import { Bookmark, BookmarkBorder } from '@mui/icons-material';
 import { useAtom } from 'jotai';
 import { favoritesAtom } from '../../atoms/filterAtoms';
-import { TintedSurface, InitialsAvatar } from '@som/ui';
+import { TintedSurface, StandardAvatar, InitialsAvatar } from '@som/ui';
+import { useAuth } from '../../lib/auth/AuthContext';
 
 export interface ResourceCardProps {
     item: ResourceItem;
@@ -44,7 +45,15 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
     const accentColor = COLORS[item.category];
 
     const [favorites, setFavorites] = useAtom(favoritesAtom);
+    const { user } = useAuth();
     const isFavorite = favorites.includes(item.id);
+
+    const renderAvatar = (name: string, color: string, size: number) => {
+        if (user?.displayName === name && user?.photoURL) {
+            return <StandardAvatar src={user.photoURL} sx={{ width: size, height: size }} />;
+        }
+        return <InitialsAvatar name={name} color={color} size={size} />;
+    };
 
     const toggleFavorite = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -186,13 +195,9 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 >
                     {/* Author & Location */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <InitialsAvatar name={item.author} color={accentColor} size={18} />
+                        {renderAvatar(item.author, accentColor, 18)}
                         <Typography variant="caption" color="text.secondary">
                             {item.author}
-                        </Typography>
-                        <Typography variant="caption" color="text.disabled">·</Typography>
-                        <Typography variant="caption" color="text.disabled">
-                            {item.office}
                         </Typography>
                     </Box>
 

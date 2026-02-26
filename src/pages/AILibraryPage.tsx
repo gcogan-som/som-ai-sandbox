@@ -4,20 +4,13 @@ import { Box, Typography, Grid } from '@mui/material';
 import { searchAtom, viewAtom } from '../atoms/filterAtoms';
 import {
     selectedItemAtom,
-    showSubmitAtom,
-    showAboutAtom,
-    showReqAtom,
 } from '../atoms/modalAtoms';
 import { StandardAccordion } from '@som/ui';
 import { useFilter } from '../hooks/useFilter';
 import { HeroSection } from '../components/hero/HeroSection';
 import { LibraryFilterBar } from '../components/filters/LibraryFilterBar';
-import { PopularSection } from '../components/cards/PopularSection';
 import { ResourceCard } from '../components/cards/ResourceCard';
 import { ResourceDetailModal } from '../components/modals/ResourceDetailModal';
-import { ContributeModal } from '../components/modals/ContributeModal';
-import { RequestModal } from '../components/modals/RequestModal';
-import { AboutPanel } from '../components/modals/AboutPanel';
 
 import { Stack } from '@mui/material';
 
@@ -34,9 +27,6 @@ export const SecHead: React.FC<{ title: string; count: number; sub?: string }> =
 
 export const AILibraryPage: React.FC = () => {
     const [selected, setSelected] = useAtom(selectedItemAtom);
-    const [showSubmit, setShowSubmit] = useAtom(showSubmitAtom);
-    const [showAbout, setShowAbout] = useAtom(showAboutAtom);
-    const showReq = useAtomValue(showReqAtom);
     const setSearch = useSetAtom(searchAtom);
 
     const view = useAtomValue(viewAtom);
@@ -49,7 +39,6 @@ export const AILibraryPage: React.FC = () => {
     return (
         <Box sx={{ maxWidth: 1360, mx: 'auto', px: { xs: 2, sm: 3, md: 4.5 } }}>
             <HeroSection />
-            <PopularSection onSelect={setSelected} />
             <LibraryFilterBar total={total} />
 
             {/* Use Section */}
@@ -100,7 +89,6 @@ export const AILibraryPage: React.FC = () => {
                 </Box>
             )}
 
-            {/* Modals */}
             {selected && (
                 <ResourceDetailModal
                     item={selected}
@@ -108,9 +96,6 @@ export const AILibraryPage: React.FC = () => {
                     onAuthorClick={handleAuthorClick}
                 />
             )}
-            {showSubmit && <ContributeModal onClose={() => setShowSubmit(false)} />}
-            {showAbout && <AboutPanel onClose={() => setShowAbout(false)} />}
-            {showReq && <RequestModal />}
         </Box>
     );
 };

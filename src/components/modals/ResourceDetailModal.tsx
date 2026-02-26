@@ -12,15 +12,21 @@ import {
     Bookmark,
     BookmarkBorder,
     ArrowUpward,
-    ArrowDownward,
     LightbulbOutlined,
     ShareOutlined,
     Link,
-    InsertDriveFileOutlined
+    InsertDriveFileOutlined,
+    EditOutlined,
+    DeleteOutline
 } from '@mui/icons-material';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { favoritesAtom } from '../../atoms/filterAtoms';
-import { StandardDialog, TintedSurface, InitialsAvatar } from '@som/ui';
+import { showSubmitAtom, editingItemAtom } from '../../atoms/modalAtoms';
+import { StandardDialog, TintedSurface, StandardAvatar, InitialsAvatar } from '@som/ui';
+import { useAuth } from '../../lib/auth/AuthContext';
+import { db } from '../../lib/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { isDevModeAtom } from '../../atoms/appAtoms';
 import type { ResourceItem, Tip } from '../../types';
 import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
@@ -40,19 +46,26 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
 }) => {
     const [userRating, setUserRating] = useState(0);
     const [newTip, setNewTip] = useState('');
-    const [tips, setTips] = useState<Tip[]>(item.tips);
+    const [tips, setTips] = useState<Tip[]>(item.tips || []);
     const [favorites, setFavorites] = useAtom(favoritesAtom);
-    const bookmarked = favorites.includes(item.id);
+    const { user } = useAuth();
+    const devMode = useAtomValue(isDevModeAtom);
+    const isAuthor = user?.displayName === item.author;
+    const bookmarked = favorites.includes(item.id as never);
     const isLearn = item.kind === 'learn';
+    const setShowSubmit = useSetAtom(showSubmitAtom);
+    const setEditingItem = useSetAtom(editingItemAtom);
     const accentColor = COLORS[item.category];
 
     const addTip = () => {
         if (!newTip.trim()) return;
-        setTips([...tips, { author: 'You', text: newTip.trim(), votes: 0 }]);
+        setTips([...tips, { author: user?.displayName || 'Anonymous', text: newTip.trim(), votes: 0 }]);
         setNewTip('');
     };
+
     const voteTip = (idx: number, delta: number) =>
         setTips(tips.map((t, j) => (j === idx ? { ...t, votes: t.votes + delta } : t)));
+
     const sorted = [...tips].sort((a, b) => b.votes - a.votes);
 
     const actionLabel = isLearn
@@ -69,13 +82,41 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                             ? 'View Full Workflow'
                             : 'Copy Prompt';
 
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this resource?')) return;
+        if (!devMode) {
+            try {
+                await deleteDoc(doc(db, 'resources', item.id.toString()));
+                onClose();
+            } catch (error) {
+                console.error("Error deleting resource:", error);
+            }
+        } else {
+            console.log("Dev Mode: Resource deleted (simulated)");
+            onClose();
+        }
+    };
+
+    const handleEdit = () => {
+        setEditingItem(item);
+        setShowSubmit(true);
+        onClose();
+    };
+
+    const renderAvatar = (name: string, color: string, size: number) => {
+        if (user?.displayName === name && user?.photoURL) {
+            return <StandardAvatar src={user.photoURL} sx={{ width: size, height: size }} />;
+        }
+        return <InitialsAvatar name={name} color={color} size={size} />;
+    };
+
     return (
         <StandardDialog
             open={true}
             onClose={onClose}
             title={item.title}
             actions={
-                <Box sx={{ display: 'flex', gap: 1, width: '100%', px: 1, pb: 1 }}>
+                <Box sx={{ display: 'flex', gap: 1, width: '100%', px: 1, pb: 1, alignItems: 'center' }}>
                     <Button
                         fullWidth
                         variant="contained"
@@ -83,13 +124,31 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                     >
                         {actionLabel}
                     </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<ShareOutlined />}
-                        sx={{ color: 'text.secondary', borderColor: 'divider' }}
+                    <IconButton
+                        sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider', borderRadius: '4px', p: 1 }}
+                        title="Share"
                     >
-                        Share
-                    </Button>
+                        <ShareOutlined sx={{ fontSize: 20 }} />
+                    </IconButton>
+                    {isAuthor && (
+                        <>
+                            <IconButton
+                                onClick={handleEdit}
+                                sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider', borderRadius: '4px', p: 1 }}
+                                title="Edit"
+                            >
+                                <EditOutlined sx={{ fontSize: 20 }} />
+                            </IconButton>
+                            <IconButton
+                                color="error"
+                                onClick={handleDelete}
+                                sx={{ border: '1px solid', borderColor: alpha(accentColor, 0.1), borderRadius: '4px', p: 1 }}
+                                title="Delete"
+                            >
+                                <DeleteOutline sx={{ fontSize: 20 }} />
+                            </IconButton>
+                        </>
+                    )}
                 </Box>
             }
         >
@@ -241,7 +300,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                         '&:hover': { opacity: 0.8 }
                     }}
                 >
-                    <InitialsAvatar name={item.author} color={accentColor} size={24} />
+                    {renderAvatar(item.author, accentColor, 24)}
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {item.author}
                     </Typography>
@@ -259,7 +318,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                     </Typography>
                     <Box
                         onClick={() => {
-                            setFavorites((prev) =>
+                            setFavorites((prev: (string | number)[]) =>
                                 prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]
                             );
                         }}
@@ -277,43 +336,50 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                 </Box>
             </Box>
 
-            {/* Tips Section */}
             <Box sx={{ mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                     <LightbulbOutlined sx={{ fontSize: 18, color: accentColor }} />
                     <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 600 }}>
-                        Pro Tips ({tips.length})
+                        Tips and Comments ({tips.length})
                     </Typography>
                 </Box>
 
                 {sorted.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                         {sorted.map((t, i) => (
                             <Box
                                 key={i}
                                 sx={{
                                     display: 'flex',
-                                    gap: 1.5,
-                                    alignItems: 'flex-start',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
                                     bgcolor: 'action.hover',
-                                    borderRadius: 1,
-                                    p: 1.25,
+                                    borderRadius: 0.5,
+                                    px: 1.25,
+                                    py: 0.75,
                                     border: '1px solid',
                                     borderColor: 'divider',
                                 }}
                             >
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.25 }}>
-                                    <IconButton onClick={() => voteTip(tips.indexOf(t), 1)} size="small" sx={{ p: 0.5, color: 'text.secondary', '&:hover': { color: accentColor } }}>
-                                        <ArrowUpward sx={{ fontSize: 14 }} />
-                                    </IconButton>
-                                    <Typography variant="caption" sx={{ fontFamily: 'monospace', lineHeight: 1, fontWeight: 600 }}>{t.votes}</Typography>
-                                    <IconButton onClick={() => voteTip(tips.indexOf(t), -1)} size="small" sx={{ p: 0.5, color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
-                                        <ArrowDownward sx={{ fontSize: 14 }} />
-                                    </IconButton>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, flex: 1 }}>
+                                    <Typography variant="body2" color="text.primary" sx={{ fontWeight: 400 }}>{t.text}</Typography>
+                                    <Typography variant="caption" color="text.disabled" sx={{ fontSize: '10px' }}>— {t.author}</Typography>
                                 </Box>
-                                <Box>
-                                    <Typography variant="body2" color="text.primary" sx={{ mb: 0.5 }}>{t.text}</Typography>
-                                    <Typography variant="caption" color="text.disabled">— {t.author}</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1 }}>
+                                    <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 700, color: t.votes > 0 ? accentColor : 'text.disabled' }}>
+                                        {t.votes}
+                                    </Typography>
+                                    <IconButton
+                                        onClick={() => voteTip(tips.indexOf(t), 1)}
+                                        size="small"
+                                        sx={{
+                                            p: 0.25,
+                                            color: 'text.disabled',
+                                            '&:hover': { color: accentColor }
+                                        }}
+                                    >
+                                        <ArrowUpward sx={{ fontSize: 12 }} />
+                                    </IconButton>
                                 </Box>
                             </Box>
                         ))}

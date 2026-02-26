@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
-import { ITEMS } from '../../data/mockItems';
+import { useAtomValue } from 'jotai';
+import { activeItemsAtom } from '../../atoms/appAtoms';
 import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 // Removed unused 'Colors' import
@@ -13,14 +14,14 @@ interface PopularSectionProps {
 }
 
 export const PopularSection: React.FC<PopularSectionProps> = ({ onSelect }) => {
-    const offices = [...new Set(ITEMS.map((i) => i.office).filter((o) => o !== 'Firmwide'))];
-    const [office] = useState(() => offices[Math.floor(Math.random() * offices.length)]);
+    const activeItems = useAtomValue(activeItemsAtom);
     const officeItems = useMemo(
         () =>
-            ITEMS.filter((i) => i.office === office && i.kind === 'use')
+            [...activeItems]
+                .filter((i) => i.kind === 'use')
                 .sort((a, b) => b.uses - a.uses)
                 .slice(0, 5),
-        [office]
+        [activeItems]
     );
 
     if (officeItems.length === 0) return null;

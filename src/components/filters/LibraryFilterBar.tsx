@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import {
-    Box, Typography, Chip, Menu, MenuItem, IconButton,
+    Box, Typography, Chip, Menu, MenuItem, IconButton, alpha,
 } from '@mui/material';
-import { GridView, ViewList, FilterList, Sort } from '@mui/icons-material';
+import { GridView, ViewList, FilterList, Sort, TrendingUp, Bookmark } from '@mui/icons-material';
 import { StandardSearchInput } from '@som/ui';
 import {
     searchAtom,
@@ -13,6 +13,7 @@ import {
     facetCountAtom,
     showFavoritesAtom,
     favoritesAtom,
+    facetsAtom,
 } from '../../atoms/filterAtoms';
 import { CATEGORIES, SORT_OPTIONS, COLORS } from '../../data/categories';
 import { useRotatingHint } from '../../hooks/useRotatingHint';
@@ -29,6 +30,7 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
     const [sort, setSort] = useAtom(sortAtom);
     const [view, setView] = useAtom(viewAtom);
     const [showFavorites, setShowFavorites] = useAtom(showFavoritesAtom);
+    const [, setFacets] = useAtom(facetsAtom);
     const favorites = useAtomValue(favoritesAtom);
     const facetCount = useAtomValue(facetCountAtom);
     const [showFacets, setShowFacets] = useState(false);
@@ -75,11 +77,20 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
                                         {c}
                                     </Box>
                                 }
-                                onClick={() => setCategory(c)}
+                                onClick={() => {
+                                    setCategory(c);
+                                    if (c === 'All') {
+                                        setSort('Newest');
+                                        setShowFavorites(false);
+                                        setFacets({ tags: [], offices: [], disciplines: [], authors: [] });
+                                    }
+                                }}
                                 size="small"
                                 variant={active ? 'filled' : 'outlined'}
                                 sx={{
                                     cursor: 'pointer',
+                                    height: 24,
+                                    fontSize: '0.75rem',
                                     ...(active && accentColor ? {
                                         bgcolor: `${accentColor}18`,
                                         borderColor: `${accentColor}55`,
@@ -90,16 +101,60 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
                         );
                     })}
                     <Chip
-                        label={`Saved ${favorites.length > 0 ? `(${favorites.length})` : ''}`}
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <TrendingUp
+                                    sx={{
+                                        fontSize: 14,
+                                        color: sort === 'Trending' ? '#FF9800' : 'text.disabled',
+                                        opacity: sort === 'Trending' ? 1 : 0.6
+                                    }}
+                                />
+                                Trending
+                            </Box>
+                        }
+                        onClick={() => setSort(sort === 'Trending' ? 'Newest' : 'Trending')}
+                        size="small"
+                        variant={sort === 'Trending' ? 'filled' : 'outlined'}
+                        sx={{
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            height: 24,
+                            fontSize: '0.75rem',
+                            ...(sort === 'Trending' && {
+                                bgcolor: alpha('#FF9800', 0.1),
+                                color: '#FF9800',
+                                borderColor: alpha('#FF9800', 0.4),
+                                '&:hover': { bgcolor: alpha('#FF9800', 0.2) }
+                            }),
+                        }}
+                    />
+                    <Chip
+                        label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Bookmark
+                                    sx={{
+                                        fontSize: 14,
+                                        color: showFavorites ? '#E91E63' : 'text.disabled',
+                                        opacity: showFavorites ? 1 : 0.6
+                                    }}
+                                />
+                                {`Saved ${favorites.length > 0 ? `(${favorites.length})` : ''}`}
+                            </Box>
+                        }
                         onClick={() => setShowFavorites(!showFavorites)}
                         size="small"
                         variant={showFavorites ? 'filled' : 'outlined'}
                         sx={{
                             cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            height: 24,
+                            fontSize: '0.75rem',
                             ...(showFavorites && {
-                                bgcolor: 'text.primary',
-                                color: 'background.paper',
-                                borderColor: 'text.primary',
+                                bgcolor: alpha('#E91E63', 0.1),
+                                color: '#E91E63',
+                                borderColor: alpha('#E91E63', 0.4),
+                                '&:hover': { bgcolor: alpha('#E91E63', 0.2) }
                             }),
                         }}
                     />

@@ -1,4 +1,19 @@
 export const OFFICES = [
-    'Firmwide', 'New York', 'Chicago', 'San Francisco',
-    'Los Angeles', 'London', 'Hong Kong', 'Abu Dhabi',
+    'Firmwide',
+    'Austin',
+    'Chicago',
+    'Dubai',
+    'Guangzhou',
+    'Hong Kong',
+    'London',
+    'Los Angeles',
+    'Melbourne',
+    'New York',
+    'Riyadh',
+    'San Francisco',
+    'Seattle',
+    'Shanghai',
+    'Washington, D.C.'
 ] as const;
+
+export type OfficeName = typeof OFFICES[number];

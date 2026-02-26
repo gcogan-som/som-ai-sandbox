@@ -29,4 +29,4 @@ export const ITEMS: ResourceItem[] = [
     { id: 106, title: 'Structural Due Diligence with AI', kind: 'learn', category: 'Gems', discipline: 'Structures', office: 'San Francisco', author: 'Marcus Webb', description: 'Case study on using the Structural System Selector during schematic design for a 40-story tower. Compares AI recommendations to the final engineered solution.', tags: ['structures', 'case-study', 'high-rise', 'schematic'], rating: 4.5, uses: 67, featured: false, verified: false, date: '2026-01-10', tips: [] },
 ];
 
-export const ALL_TAGS = [...new Set(ITEMS.flatMap((i) => i.tags))].sort();
+export const ALL_TAGS: string[] = [];

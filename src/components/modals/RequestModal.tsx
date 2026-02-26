@@ -11,41 +11,71 @@ import {
 } from '@mui/material';
 import { ArrowUpward, Add } from '@mui/icons-material';
 import { StandardDialog, StandardSelect } from '@som/ui';
+import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { requestsAtom, showReqAtom } from '../../atoms/modalAtoms';
+import { isDevModeAtom } from '../../atoms/appAtoms';
 import { CATEGORIES, COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 import type { CategoryName } from '../../types';
 
-export const RequestModal: React.FC = () => {
+export const RequestModal: React.FC<{ open: boolean }> = ({ open }) => {
     const [requests, setRequests] = useAtom(requestsAtom);
     const [, setShowReq] = useAtom(showReqAtom);
     const [newTitle, setNewTitle] = React.useState('');
     const [newCategory, setNewCategory] = React.useState<CategoryName>('Gems');
+    const [devMode] = useAtom(isDevModeAtom);
     const onClose = () => setShowReq(false);
 
-    const addRequest = () => {
+    const addRequest = async () => {
         if (!newTitle.trim()) return;
-        const nextId = requests.length ? Math.max(...requests.map(r => r.id)) + 1 : 1;
-        setRequests([{
-            id: nextId,
+
+        const requestData = {
             title: newTitle.trim(),
             category: newCategory,
-            author: 'You',
-            office: 'Local',
+            author: 'You', // TODO: Use actual user name from Auth
+            office: 'Local', // TODO: Use actual user office
             votes: 1,
-            date: new Date().toISOString().split('T')[0]
-        }, ...requests]);
+            date: new Date().toISOString().split('T')[0],
+            createdAt: serverTimestamp()
+        };
+
+        if (devMode) {
+            const nextId = requests.length ? Math.max(...requests.map(r => typeof r.id === 'number' ? r.id : 0)) + 1 : 1;
+            setRequests([{
+                id: nextId,
+                ...requestData
+            }, ...requests]);
+        } else {
+            try {
+                await addDoc(collection(db, 'requests'), requestData);
+            } catch (error) {
+                console.error("Error adding request:", error);
+            }
+        }
         setNewTitle('');
     };
 
-    const vote = (id: number) =>
-        setRequests(requests.map((r) => (r.id === id ? { ...r, votes: r.votes + 1 } : r)));
+    const vote = async (id: number | string) => {
+        if (devMode) {
+            setRequests(requests.map((r) => (r.id === id ? { ...r, votes: r.votes + 1 } : r)));
+        } else {
+            try {
+                const requestRef = doc(db, 'requests', id.toString());
+                await updateDoc(requestRef, {
+                    votes: increment(1)
+                });
+            } catch (error) {
+                console.error("Error voting:", error);
+            }
+        }
+    };
 
     const sorted = [...requests].sort((a, b) => b.votes - a.votes);
 
     return (
         <StandardDialog
-            open={true}
+            open={open}
             onClose={onClose}
             title="Requests"
         >

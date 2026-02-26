@@ -48,7 +48,7 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
         filterKey: keyof FacetFilters;
     }) => (
         <Box sx={{ mb: 1.5 }}>
-            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 0.75 }}>
+            <Typography variant="overline" color="text.disabled" sx={{ ...(sectionLabelSx as any), display: 'block', mb: 0.75 }}>
                 {title}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

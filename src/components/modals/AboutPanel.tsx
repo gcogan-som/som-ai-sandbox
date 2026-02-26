@@ -6,13 +6,14 @@ import { CatIcon } from '../shared/CatIcon';
 import type { CategoryName } from '../../types';
 
 interface AboutPanelProps {
+    open: boolean;
     onClose: () => void;
 }
 
-export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
+export const AboutPanel: React.FC<AboutPanelProps> = ({ open, onClose }) => {
     return (
         <StandardDialog
-            open={true}
+            open={open}
             onClose={onClose}
             title="About AI Library"
         >
@@ -31,7 +32,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
                 office and discipline. Built by the firm, for the firm.
             </Typography>
 
-            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 2 }}>
+            <Typography variant="overline" color="text.disabled" sx={{ ...(sectionLabelSx as any), display: 'block', mb: 2 }}>
                 Resource Types
             </Typography>
 
@@ -61,7 +62,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ onClose }) => {
                 ))}
             </Grid>
 
-            <Typography variant="overline" color="text.disabled" sx={{ ...sectionLabelSx, display: 'block', mb: 1.5 }}>
+            <Typography variant="overline" color="text.disabled" sx={{ ...(sectionLabelSx as any), display: 'block', mb: 1.5 }}>
                 Badges
             </Typography>
 
