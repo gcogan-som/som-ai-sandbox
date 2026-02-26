@@ -1,24 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useAtom } from 'jotai';
 import {
   CssBaseline,
   ThemeProvider,
-  IconButton,
-  Tooltip,
-  Stack,
-  Box,
-  Typography,
-  Button
+  Box
 } from '@mui/material';
-import { DarkMode, LightMode, ChatBubble } from '@mui/icons-material';
+import { DarkMode, LightMode, ChatBubble, Refresh } from '@mui/icons-material';
 import {
   createFirmTheme,
   StandardLayout,
   HeaderTitleGroup,
   StandardChip,
   StandardAuthGate,
-  StandardLogo,
-  StandardIconButton
+  StandardIconButton,
+  StandardAppLoader,
+  StandardActionGroup
 } from '@som/ui';
 import { themeModeAtom } from './atoms/layoutAtoms';
 import { showAboutAtom, showSubmitAtom, showReqAtom, showFeedbackAtom } from './atoms/modalAtoms';
@@ -42,18 +38,7 @@ function AppContent() {
   const [, setRefresh] = useAtom(refreshAtom);
   const [devMode, setDevMode] = useAtom(isDevModeAtom);
   const { isAuthenticated, login, loading: authLoading } = useAuth();
-  const [showTimeout, setShowTimeout] = useState(false);
 
-  // Connection timeout for Mainland China/Hong Kong where Firebase is blocked
-  useEffect(() => {
-    let timer: number;
-    if (authLoading) {
-      timer = window.setTimeout(() => setShowTimeout(true), 5000);
-    }
-    return () => clearTimeout(timer);
-  }, [authLoading]);
-
-  const loading = authLoading && !devMode;
 
   const theme = useMemo(() => createFirmTheme('browser', mode), [mode]);
 
@@ -100,120 +85,74 @@ function AppContent() {
 
   const toggleTheme = () => setMode(mode === 'dark' ? 'light' : 'dark');
 
-  if (loading) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box
-          sx={{
-            height: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            bgcolor: 'background.default',
-            gap: 3,
-            animation: 'fadeIn 0.5s ease-out'
-          }}
-        >
-          <StandardLogo height={48} variant={mode === 'dark' ? 'white' : 'black'} />
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ letterSpacing: '0.2em', opacity: 0.6 }}
-          >
-            Initializing Sandbox
-          </Typography>
-
-          {showTimeout && (
-            <Stack spacing={2} alignItems="center" sx={{ mt: 4, animation: 'fadeIn 0.5s ease-out' }}>
-              <Typography variant="caption" color="text.disabled" sx={{ maxWidth: 240, textAlign: 'center' }}>
-                Connection taking longer than usual. If you are in the Shanghai office, you may need to enter offline mode.
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => setDevMode(true)}
-                sx={{ borderColor: 'divider', color: 'text.secondary' }}
-              >
-                Enter Offline Mode
-              </Button>
-            </Stack>
-          )}
-        </Box>
-      </ThemeProvider>
-    );
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <FirebaseSync />
-      <StandardLayout
+      <StandardAppLoader
+        loading={authLoading && !devMode}
+        appName="AI Sandbox"
+        appSub="Digital Design Research"
         mode={mode}
-        headerProps={{
-          title: TitleArea,
-          variant: 'som',
-          actions: (
-            <Stack direction="row" alignItems="center" spacing={1.5}>
-              <StandardIconButton
-                name="refresh"
-                label="Refresh Content"
-                onClick={() => setRefresh(prev => prev + 1)}
-                variant="small"
-                sx={{
-                  color: mode === 'light' ? '#000000' : 'inherit',
-                  width: 28,
-                  height: 28,
-                  '& .MuiSvgIcon-root': { fontSize: 18 }
-                }}
-              />
-              <Tooltip title="Submit Feedback">
-                <IconButton
-                  size="small"
-                  onClick={() => setShowFeedback(true)}
-                  color="inherit"
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    color: mode === 'light' ? '#000000' : 'inherit'
-                  }}
-                >
-                  <ChatBubble sx={{ fontSize: 18 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}>
-                <IconButton
-                  size="small"
-                  onClick={toggleTheme}
-                  color="inherit"
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    color: mode === 'light' ? '#000000' : 'inherit'
-                  }}
-                >
-                  {mode === 'dark'
-                    ? <LightMode sx={{ fontSize: 18 }} />
-                    : <DarkMode sx={{ fontSize: 18 }} />}
-                </IconButton>
-              </Tooltip>
-              <AuthButton />
-            </Stack>
-          ),
-        }}
+        onBypass={() => setDevMode(true)}
       >
-        <StandardAuthGate
-          isAuthenticated={isAuthenticated}
-          onLogin={login}
-          isLoading={authLoading}
-          title="AI SANDBOX"
-          category="Digital Design Research"
-          description="Please sign in with your SOM account to access the AI component library and resources."
+        <FirebaseSync />
+        <StandardLayout
+          mode={mode}
+          headerProps={{
+            title: TitleArea,
+            variant: 'som',
+            actions: (
+              <StandardActionGroup spacing={1.5}>
+                <StandardIconButton
+                  icon={Refresh}
+                  label="Refresh Content"
+                  onClick={() => setRefresh(prev => prev + 1)}
+                  variant="small"
+                  sx={{
+                    color: mode === 'light' ? '#000000' : 'inherit',
+                    width: 28,
+                    height: 28
+                  }}
+                />
+                <StandardIconButton
+                  icon={ChatBubble}
+                  label="Submit Feedback"
+                  onClick={() => setShowFeedback(true)}
+                  variant="small"
+                  sx={{
+                    color: mode === 'light' ? '#000000' : 'inherit',
+                    width: 28,
+                    height: 28
+                  }}
+                />
+                <StandardIconButton
+                  icon={mode === 'dark' ? LightMode : DarkMode}
+                  label={`Switch to ${mode === 'dark' ? 'Light' : 'Dark'} mode`}
+                  onClick={toggleTheme}
+                  variant="small"
+                  sx={{
+                    color: mode === 'light' ? '#000000' : 'inherit',
+                    width: 28,
+                    height: 28
+                  }}
+                />
+                <AuthButton />
+              </StandardActionGroup>
+            ),
+          }}
         >
-          <AILibraryPage />
-        </StandardAuthGate>
-      </StandardLayout>
+          <StandardAuthGate
+            isAuthenticated={isAuthenticated}
+            onLogin={login}
+            isLoading={authLoading}
+            title="AI SANDBOX"
+            category="Digital Design Research"
+            description="Please sign in with your SOM account to access the AI component library and resources."
+          >
+            <AILibraryPage />
+          </StandardAuthGate>
+        </StandardLayout>
+      </StandardAppLoader>
       <AboutPanel open={showAbout} onClose={() => setShowAbout(false)} />
       <ContributeModal open={showSubmit} onClose={() => setShowSubmit(false)} />
       <RequestModal open={showReq} />

@@ -1,29 +1,16 @@
 import React from 'react';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { Box, Typography, Grid } from '@mui/material';
+import { Box } from '@mui/material';
 import { searchAtom, viewAtom } from '../atoms/filterAtoms';
 import {
     selectedItemAtom,
 } from '../atoms/modalAtoms';
-import { StandardAccordion } from '@som/ui';
+import { StandardAccordion, StandardSectionHeader, StandardCollectionGrid } from '@som/ui';
 import { useFilter } from '../hooks/useFilter';
 import { HeroSection } from '../components/hero/HeroSection';
 import { LibraryFilterBar } from '../components/filters/LibraryFilterBar';
 import { ResourceCard } from '../components/cards/ResourceCard';
 import { ResourceDetailModal } from '../components/modals/ResourceDetailModal';
-
-import { Stack } from '@mui/material';
-
-export const SecHead: React.FC<{ title: string; count: number; sub?: string }> = ({ title, count }) => (
-    <Stack direction="row" alignItems="baseline" spacing={1}>
-        <Typography variant="h2" component="h2" sx={{ fontSize: '1.25rem' }}>
-            {title}
-        </Typography>
-        <Typography variant="caption" color="text.disabled">
-            ({count})
-        </Typography>
-    </Stack>
-);
 
 export const AILibraryPage: React.FC = () => {
     const [selected, setSelected] = useAtom(selectedItemAtom);
@@ -43,50 +30,51 @@ export const AILibraryPage: React.FC = () => {
 
             {/* Use Section */}
             {useItems.length > 0 && (
-                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
+                <Box component="section" sx={{ mb: 4.5 }}>
                     <StandardAccordion
                         defaultExpanded
-                        title={<SecHead title="Resources" count={useItems.length} sub="" />}
+                        title={<StandardSectionHeader title="Resources" count={useItems.length} showDivider={false} sx={{ mb: 0 }} />}
                         subtitle="Tools, prompts, and workflows ready to use today"
                     >
-                        <Grid container spacing={view === 'grid' ? 1.25 : 0.5}>
-                            {useItems.map((item, i) => (
-                                <Grid size={view === 'grid' ? { xs: 12, sm: 6, md: 4 } : { xs: 12 }} key={item.id}>
-                                    <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
-                                </Grid>
-                            ))}
-                        </Grid>
+                        <StandardCollectionGrid
+                            items={useItems}
+                            view={view}
+                            animate={false}
+                            renderItem={(item, i) => (
+                                <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
+                            )}
+                        />
                     </StandardAccordion>
                 </Box>
             )}
 
             {/* Learn Section */}
             {learnItems.length > 0 && (
-                <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
+                <Box component="section" sx={{ mb: 4.5 }}>
                     <StandardAccordion
                         defaultExpanded
-                        title={<SecHead title="Guides" count={learnItems.length} sub="" />}
+                        title={<StandardSectionHeader title="Guides" count={learnItems.length} showDivider={false} sx={{ mb: 0 }} />}
                         subtitle="Case studies, tutorials, and methodology guides"
                     >
-                        <Grid container spacing={view === 'grid' ? 1.25 : 0.5}>
-                            {learnItems.map((item, i) => (
-                                <Grid size={view === 'grid' ? { xs: 12, sm: 6, md: 4 } : { xs: 12 }} key={item.id}>
-                                    <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
-                                </Grid>
-                            ))}
-                        </Grid>
+                        <StandardCollectionGrid
+                            items={learnItems}
+                            view={view}
+                            animate={false}
+                            renderItem={(item, i) => (
+                                <ResourceCard item={item} index={i} onClick={setSelected} layout={view} />
+                            )}
+                        />
                     </StandardAccordion>
                 </Box>
             )}
 
             {/* Empty state */}
             {total === 0 && (
-                <Box sx={{ textAlign: 'center', py: 8, animation: 'fadeUp 0.3s ease' }}>
-                    <Typography variant="h1" sx={{ mb: 1.5, opacity: 0.3 }}>∅</Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        No resources match your filters. Try adjusting your search.
-                    </Typography>
-                </Box>
+                <StandardCollectionGrid
+                    items={[]}
+                    view={view}
+                    renderItem={() => null}
+                />
             )}
 
             {selected && (

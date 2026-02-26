@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
-import {
-    Box, Typography, Chip, Menu, MenuItem, IconButton, alpha,
-} from '@mui/material';
-import { GridView, ViewList, FilterList, Sort, TrendingUp, Bookmark } from '@mui/icons-material';
-import { StandardSearchInput } from '@som/ui';
+import { StandardFilterBar } from '@som/ui';
 import {
     searchAtom,
     categoryAtom,
@@ -24,6 +20,12 @@ interface LibraryFilterBarProps {
     total: number;
 }
 
+/**
+ * LibraryFilterBar
+ * 
+ * App-specific wrapper that binds the foundation StandardFilterBar 
+ * to Jotai State and application data (Categories, Icons, etc).
+ */
 export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => {
     const [search, setSearch] = useAtom(searchAtom);
     const [category, setCategory] = useAtom(categoryAtom);
@@ -34,230 +36,58 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
     const favorites = useAtomValue(favoritesAtom);
     const facetCount = useAtomValue(facetCountAtom);
     const [showFacets, setShowFacets] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const placeholder = useRotatingHint();
 
+    // Map categories to FilterOption format
+    const filters = CATEGORIES.map(c => ({
+        value: c,
+        label: c,
+        color: c !== 'All' ? COLORS[c as CategoryName] : undefined
+    }));
+
     return (
-        <Box sx={{ position: 'relative', mb: 2.5 }}>
-            {/* Search */}
-            <StandardSearchInput
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClear={() => setSearch('')}
-                placeholder={placeholder}
-                sx={{ mb: 1.5 }}
-                fullWidth
-            />
+        <StandardFilterBar
+            searchValue={search}
+            onSearchChange={setSearch}
+            searchPlaceholder={placeholder}
 
-            {/* Controls row */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-                {/* Category chips */}
-                <Box sx={{ display: 'flex', gap: 0.5, flex: 1, flexWrap: 'wrap' }}>
-                    {CATEGORIES.map((c) => {
-                        const active = category === c;
-                        const accentColor = c !== 'All' ? COLORS[c as CategoryName] : undefined;
-                        return (
-                            <Chip
-                                key={c}
-                                label={
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        {c !== 'All' && (
-                                            <Box
-                                                component="span"
-                                                sx={{
-                                                    width: 6,
-                                                    height: 6,
-                                                    borderRadius: '50%',
-                                                    bgcolor: accentColor,
-                                                    opacity: active ? 1 : 0.4,
-                                                    display: 'inline-block',
-                                                }}
-                                            />
-                                        )}
-                                        {c}
-                                    </Box>
-                                }
-                                onClick={() => {
-                                    setCategory(c);
-                                    if (c === 'All') {
-                                        setSort('Newest');
-                                        setShowFavorites(false);
-                                        setFacets({ tags: [], offices: [], disciplines: [], authors: [] });
-                                    }
-                                }}
-                                size="small"
-                                variant={active ? 'filled' : 'outlined'}
-                                sx={{
-                                    cursor: 'pointer',
-                                    height: 24,
-                                    fontSize: '0.75rem',
-                                    ...(active && accentColor ? {
-                                        bgcolor: `${accentColor}18`,
-                                        borderColor: `${accentColor}55`,
-                                        color: accentColor,
-                                    } : {}),
-                                }}
-                            />
-                        );
-                    })}
-                    <Chip
-                        label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <TrendingUp
-                                    sx={{
-                                        fontSize: 14,
-                                        color: sort === 'Trending' ? '#FF9800' : 'text.disabled',
-                                        opacity: sort === 'Trending' ? 1 : 0.6
-                                    }}
-                                />
-                                Trending
-                            </Box>
-                        }
-                        onClick={() => setSort(sort === 'Trending' ? 'Newest' : 'Trending')}
-                        size="small"
-                        variant={sort === 'Trending' ? 'filled' : 'outlined'}
-                        sx={{
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            height: 24,
-                            fontSize: '0.75rem',
-                            ...(sort === 'Trending' && {
-                                bgcolor: alpha('#FF9800', 0.1),
-                                color: '#FF9800',
-                                borderColor: alpha('#FF9800', 0.4),
-                                '&:hover': { bgcolor: alpha('#FF9800', 0.2) }
-                            }),
-                        }}
-                    />
-                    <Chip
-                        label={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Bookmark
-                                    sx={{
-                                        fontSize: 14,
-                                        color: showFavorites ? '#E91E63' : 'text.disabled',
-                                        opacity: showFavorites ? 1 : 0.6
-                                    }}
-                                />
-                                {`Saved ${favorites.length > 0 ? `(${favorites.length})` : ''}`}
-                            </Box>
-                        }
-                        onClick={() => setShowFavorites(!showFavorites)}
-                        size="small"
-                        variant={showFavorites ? 'filled' : 'outlined'}
-                        sx={{
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            height: 24,
-                            fontSize: '0.75rem',
-                            ...(showFavorites && {
-                                bgcolor: alpha('#E91E63', 0.1),
-                                color: '#E91E63',
-                                borderColor: alpha('#E91E63', 0.4),
-                                '&:hover': { bgcolor: alpha('#E91E63', 0.2) }
-                            }),
-                        }}
-                    />
-                </Box>
+            filters={filters}
+            selectedFilters={[category]}
+            onFilterToggle={(val) => {
+                setCategory(val);
+                if (val === 'All') {
+                    setSort('Newest');
+                    setShowFavorites(false);
+                    setFacets({ tags: [], offices: [], disciplines: [], authors: [] });
+                }
+            }}
 
-                {/* Facet toggle */}
-                <IconButton
-                    size="small"
-                    onClick={() => setShowFacets(!showFacets)}
-                    sx={{
-                        bgcolor: facetCount > 0 || showFacets ? 'action.selected' : 'transparent',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        borderRadius: 1,
-                        p: 0.5,
-                        '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                >
-                    <FilterList sx={{ fontSize: 18 }} />
-                </IconButton>
+            showTrending
+            trendingActive={sort === 'Trending'}
+            onTrendingToggle={() => setSort(sort === 'Trending' ? 'Newest' : 'Trending')}
 
-                {/* Sort toggle */}
-                <IconButton
-                    size="small"
-                    onClick={(e) => setAnchorEl(e.currentTarget)}
-                    sx={{
-                        bgcolor: anchorEl ? 'action.selected' : 'transparent',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        color: 'text.secondary',
-                        borderRadius: 1,
-                        p: 0.5,
-                        '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                >
-                    <Sort sx={{ fontSize: 18 }} />
-                </IconButton>
-                <Menu
-                    anchorEl={anchorEl}
-                    open={Boolean(anchorEl)}
-                    onClose={() => setAnchorEl(null)}
-                    PaperProps={{
-                        sx: { mt: 1, border: '1px solid', borderColor: 'divider', boxShadow: 3 }
-                    }}
-                >
-                    {SORT_OPTIONS.map((s) => (
-                        <MenuItem
-                            key={s}
-                            selected={sort === s}
-                            onClick={() => {
-                                setSort(s as any);
-                                setAnchorEl(null);
-                            }}
-                            sx={{ fontSize: '0.875rem' }}
-                        >
-                            {s}
-                        </MenuItem>
-                    ))}
-                </Menu>
+            showSaved
+            savedActive={showFavorites}
+            savedCount={favorites.length}
+            onSavedToggle={() => setShowFavorites(!showFavorites)}
 
-                {/* View toggles */}
-                <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-                    <IconButton
-                        size="small"
-                        onClick={() => setView('grid')}
-                        sx={{
-                            bgcolor: view === 'grid' ? 'action.selected' : 'transparent',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            color: view === 'grid' ? 'text.primary' : 'text.disabled',
-                            borderRadius: 1,
-                            p: 0.5,
-                            '&:hover': { bgcolor: 'action.hover' }
-                        }}
-                    >
-                        <GridView sx={{ fontSize: 18 }} />
-                    </IconButton>
-                    <IconButton
-                        size="small"
-                        onClick={() => setView('list')}
-                        sx={{
-                            bgcolor: view === 'list' ? 'action.selected' : 'transparent',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            color: view === 'list' ? 'text.primary' : 'text.disabled',
-                            borderRadius: 1,
-                            p: 0.5,
-                            '&:hover': { bgcolor: 'action.hover' }
-                        }}
-                    >
-                        <ViewList sx={{ fontSize: 18 }} />
-                    </IconButton>
-                </Box>
+            resultsCount={total}
 
-                {/* Count */}
-                <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: 'nowrap' }}>
-                    {total} results
-                </Typography>
-            </Box>
+            onFacetToggle={() => setShowFacets(!showFacets)}
+            facetPanelActive={showFacets || facetCount > 0}
+            facetCount={facetCount}
 
-            {/* Facet panel */}
-            {showFacets && <FacetPanel onClose={() => setShowFacets(false)} />}
-        </Box>
+            sortOptions={SORT_OPTIONS as any}
+            activeSort={sort}
+            onSortChange={(val) => setSort(val as any)}
+
+            view={view}
+            onViewToggle={setView}
+
+            sx={{ mb: 2.5 }}
+
+            // Render the facet panel as a child when active
+            renderExtra={showFacets ? <FacetPanel onClose={() => setShowFacets(false)} /> : undefined}
+        />
     );
 };

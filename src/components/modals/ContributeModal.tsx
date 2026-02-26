@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import {
     Box,
     Typography,
-    Button,
     TextField,
-    IconButton,
 } from '@mui/material';
 import { Close, Construction, Description } from '@mui/icons-material';
-import { StandardDialog, FormField, StandardSelect } from '@som/ui';
+import { StandardDialog, FormField, StandardSelect, StandardButton, StandardIconButton } from '@som/ui';
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { useAtomValue, useAtom } from 'jotai';
 import { db } from '../../lib/firebase';
@@ -174,20 +172,20 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                     {step === 1 ? (
                         <>
                             <Box />
-                            <Button variant="contained" onClick={() => setStep(2)} disabled={!form.name.trim()}>
+                            <StandardButton variant="primary" onClick={() => setStep(2)} disabled={!form.name.trim()}>
                                 Next
-                            </Button>
+                            </StandardButton>
                         </>
                     ) : (
                         <>
-                            <Button variant="outlined" onClick={() => setStep(1)} sx={{ borderColor: 'divider' }} disabled={submitting}>
+                            <StandardButton variant="secondary" onClick={() => setStep(1)} sx={{ height: 36.5 }} disabled={submitting}>
                                 Back
-                            </Button>
-                            <Button variant="contained" color="success" onClick={handleSubmit} disabled={submitting || !form.name.trim() || !form.link.trim()}>
+                            </StandardButton>
+                            <StandardButton variant="primary" onClick={handleSubmit} disabled={submitting || !form.name.trim() || !form.link.trim()}>
                                 {submitting
                                     ? (editingItem ? 'Updating...' : 'Submitting...')
                                     : (editingItem ? 'Update' : 'Submit')}
-                            </Button>
+                            </StandardButton>
                         </>
                     )}
                 </Box>
@@ -348,9 +346,12 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleLinkChange(i, e.target.value)}
                                     />
                                     {extraLinks.length > 1 && i !== extraLinks.length - 1 && (
-                                        <IconButton onClick={() => removeLink(i)} size="small" aria-label="Remove link">
-                                            <Close fontSize="small" />
-                                        </IconButton>
+                                        <StandardIconButton
+                                            icon={Close}
+                                            label="Remove link"
+                                            onClick={() => removeLink(i)}
+                                            variant="default"
+                                        />
                                     )}
                                 </Box>
                             ))}

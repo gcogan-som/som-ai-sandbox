@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useMemo } from 'react';
 import { useAtom } from 'jotai';
-import { Box, Typography, Chip, Button, Paper } from '@mui/material';
-import { sectionLabelSx } from '@som/ui';
+import { Box, Typography, Paper } from '@mui/material';
+import { sectionLabelSx, StandardChip, StandardButton } from '@som/ui';
 import { facetsAtom } from '../../atoms/filterAtoms';
 import { ITEMS } from '../../data/mockItems';
 import type { FacetFilters } from '../../types';
@@ -55,11 +55,11 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
                 {data.map(([v, c]) => {
                     const active = filters[filterKey].includes(v);
                     return (
-                        <Chip
+                        <StandardChip
                             key={v}
                             label={`${v} (${c})`}
                             onClick={() => toggle(filterKey, v)}
-                            size="small"
+                            density="compact"
                             variant={active ? 'filled' : 'outlined'}
                             sx={{ cursor: 'pointer', fontSize: '10px' }}
                         />
@@ -91,14 +91,14 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.75 }}>
                 <Typography variant="h5">Filters</Typography>
                 {ct > 0 && (
-                    <Button
-                        size="small"
-                        variant="text"
+                    <StandardButton
+                        size="legacy"
+                        variant="ghost"
                         onClick={() => setFilters({ tags: [], offices: [], disciplines: [], authors: [] })}
-                        sx={{ fontSize: '10px', color: 'text.secondary' }}
+                        sx={{ fontSize: '10px' }}
                     >
                         Clear all ({ct})
-                    </Button>
+                    </StandardButton>
                 )}
             </Box>
             {renderSection({

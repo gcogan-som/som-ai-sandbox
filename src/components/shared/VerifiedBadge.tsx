@@ -1,11 +1,6 @@
 import React from 'react';
-import { Verified } from '@mui/icons-material';
+import { StandardVerifiedBadge } from '@som/ui';
 
 export const VerifiedBadge: React.FC<{ size?: number }> = ({ size = 12 }) => (
-    <Verified
-        sx={{
-            fontSize: size,
-            color: 'text.secondary',
-        }}
-    />
+    <StandardVerifiedBadge size={size} />
 );

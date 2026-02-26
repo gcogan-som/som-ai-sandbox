@@ -6,7 +6,7 @@ import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 // Removed unused 'Colors' import
 import { StarsDisplay } from '../shared/StarRating';
-import { SecHead } from '../../pages/AILibraryPage';
+import { StandardSectionHeader } from '@som/ui';
 import type { ResourceItem } from '../../types';
 
 interface PopularSectionProps {
@@ -29,7 +29,7 @@ export const PopularSection: React.FC<PopularSectionProps> = ({ onSelect }) => {
     return (
         <Box component="section" sx={{ mb: 4.5, animation: 'fadeUp 0.4s ease both' }}>
             <Box sx={{ mb: 2 }}>
-                <SecHead title="Popular" count={officeItems.length} />
+                <StandardSectionHeader title="Popular" count={officeItems.length} showDivider={false} sx={{ mb: 0 }} />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                     Trending tools right now
                 </Typography>

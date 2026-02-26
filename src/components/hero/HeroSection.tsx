@@ -1,14 +1,13 @@
 import React from 'react';
 import { useAtom, useAtomValue } from 'jotai';
-import { Box, Typography, Button, Stack, Divider, Tooltip, IconButton, alpha, useTheme } from '@mui/material';
+import { Box, Typography, Stack, Divider, Tooltip } from '@mui/material';
 import { HelpOutline } from '@mui/icons-material';
-import { sectionLabelSx } from '@som/ui';
+import { sectionLabelSx, StandardButton, StandardIconButton } from '@som/ui';
 import { activeItemsAtom } from '../../atoms/appAtoms';
 import { showAboutAtom, showSubmitAtom, showReqAtom } from '../../atoms/modalAtoms';
 import { useAuth } from '../../lib/auth/AuthContext';
 
 export const HeroSection: React.FC = () => {
-    const theme = useTheme();
     const [, setShowAbout] = useAtom(showAboutAtom);
     const [, setShowSubmit] = useAtom(showSubmitAtom);
     const [, setShowReq] = useAtom(showReqAtom);
@@ -40,13 +39,14 @@ export const HeroSection: React.FC = () => {
                             AI Sandbox
                         </Typography>
                         <Tooltip title="What is the AI Sandbox?">
-                            <IconButton
-                                size="small"
-                                onClick={() => setShowAbout(true)}
-                                sx={{ color: 'text.disabled', '&:hover': { color: 'text.primary' } }}
-                            >
-                                <HelpOutline sx={{ fontSize: 20 }} />
-                            </IconButton>
+                            <Box>
+                                <StandardIconButton
+                                    icon={HelpOutline}
+                                    label="What is the AI Sandbox?"
+                                    onClick={() => setShowAbout(true)}
+                                    variant="default"
+                                />
+                            </Box>
                         </Tooltip>
                     </Stack>
                     <Typography
@@ -85,39 +85,23 @@ export const HeroSection: React.FC = () => {
 
                 {/* Actions Row */}
                 <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Button
-                        size="small"
-                        variant="contained"
+                    <StandardButton
+                        size="legacy"
+                        variant="primary"
                         onClick={() => setShowSubmit(true)}
                         disabled={!isAuthenticated}
-                        sx={{
-                            height: 32,
-                            px: 2,
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            bgcolor: 'text.primary',
-                            color: 'background.paper',
-                            '&:hover': { bgcolor: alpha(theme.palette.text.primary, 0.8) }
-                        }}
+                        sx={{ height: 32 }}
                     >
                         Contribute Resource
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="outlined"
+                    </StandardButton>
+                    <StandardButton
+                        size="legacy"
+                        variant="secondary"
                         onClick={() => setShowReq(true)}
-                        sx={{
-                            height: 32,
-                            px: 2,
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            borderColor: 'divider',
-                            color: 'text.primary',
-                            '&:hover': { borderColor: 'text.primary', bgcolor: 'action.hover' }
-                        }}
+                        sx={{ height: 32 }}
                     >
                         Request Tool
-                    </Button>
+                    </StandardButton>
                 </Stack>
             </Stack>
         </Box>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Chip } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import type { ResourceItem } from '../../types';
 import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
@@ -8,7 +8,7 @@ import { VerifiedBadge } from '../shared/VerifiedBadge';
 import { Bookmark, BookmarkBorder } from '@mui/icons-material';
 import { useAtom } from 'jotai';
 import { favoritesAtom } from '../../atoms/filterAtoms';
-import { TintedSurface, StandardAvatar, InitialsAvatar } from '@som/ui';
+import { TintedSurface, StandardAvatar, InitialsAvatar, StandardChip } from '@som/ui';
 import { useAuth } from '../../lib/auth/AuthContext';
 
 export interface ResourceCardProps {
@@ -27,14 +27,13 @@ const NewBadge: React.FC<{ date: string }> = ({ date }) => {
     if (d > 7) return null;
     const label = d <= 1 ? 'Today' : d <= 3 ? `${d}d ago` : 'New';
     return (
-        <Chip
+        <StandardChip
             label={label}
-            size="small"
+            density="compact"
             sx={{
                 fontWeight: 600,
                 bgcolor: 'action.selected',
                 color: 'text.secondary',
-                '& .MuiChip-label': { px: 0.75 },
             }}
         />
     );
@@ -50,7 +49,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
 
     const renderAvatar = (name: string, color: string, size: number) => {
         if (user?.displayName === name && user?.photoURL) {
-            return <StandardAvatar src={user.photoURL} sx={{ width: size, height: size }} />;
+            return <StandardAvatar src={user.photoURL} size="small" sx={{ width: size, height: size }} />;
         }
         return <InitialsAvatar name={name} color={color} size={size} />;
     };
@@ -126,13 +125,12 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                         <NewBadge date={item.date} />
                         {isLearn && (
-                            <Chip
+                            <StandardChip
                                 label="Guide"
-                                size="small"
+                                density="compact"
                                 sx={{
                                     bgcolor: 'action.selected',
                                     color: 'text.disabled',
-                                    '& .MuiChip-label': { px: 0.75 },
                                 }}
                             />
                         )}
@@ -168,15 +166,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 {/* Tags */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.375 }}>
                     {item.tags.slice(0, 3).map((t) => (
-                        <Chip
+                        <StandardChip
                             key={t}
                             label={t}
-                            size="small"
+                            density="compact"
                             sx={{
                                 border: 'none',
                                 bgcolor: 'action.hover',
                                 color: 'text.secondary',
-                                '& .MuiChip-label': { px: 0.75 },
                             }}
                         />
                     ))}
