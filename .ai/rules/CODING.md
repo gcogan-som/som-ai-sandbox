@@ -77,3 +77,32 @@ sx={{ color: '#757575', p: '16px' }}
 // ✅ ALWAYS
 sx={{ color: 'text.secondary', p: 2 }}
 ```
+
+---
+
+## 5. Material UI Standards
+
+### Import Rules
+- **Rule**: ALWAYS use top-level imports from `@mui/material`.
+- **Rationale**: Prevents "Error #130" runtime crashes caused by mixed import paths (deep vs top-level) in linked library environments.
+
+```typescript
+// ❌ NEVER
+import Box from '@mui/material/Box';
+import { Grid } from '@mui/material/Grid';
+
+// ✅ ALWAYS
+import { Box, Grid, Typography } from '@mui/material';
+```
+
+### Grid v2 (MUI v7) Rules
+- **Rule**: Use the modern `size` prop API for responsive layout.
+- **Rule**: NEVER use the deprecated `item` prop or `xs={12}` style props.
+
+```typescript
+// ❌ NEVER
+<Grid item xs={12} sm={6}>
+
+// ✅ ALWAYS
+<Grid size={{ xs: 12, sm: 6 }}>
+```

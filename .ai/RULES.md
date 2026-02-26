@@ -1,6 +1,6 @@
 # SOM Standard — Universal AI & Development Rules
 
-> **Last Updated**: 2026-02-18
+> **Last Updated**: 2026-02-26
 > **Applies To**: All developers, all LLMs, all IDEs
 > **Canonical Source**: This file is the single source of truth.
 

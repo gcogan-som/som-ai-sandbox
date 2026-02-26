@@ -110,6 +110,43 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         return <InitialsAvatar name={name} color={color} size={size} />;
     };
 
+    const [copied, setCopied] = useState(false);
+
+    const handlePrimaryAction = () => {
+        if (actionLabel === 'Copy Prompt') {
+            if (item.prompt) {
+                navigator.clipboard.writeText(item.prompt);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } else if (item.primaryLink) {
+            window.open(item.primaryLink, '_blank', 'noopener,noreferrer');
+        }
+    };
+
+    const handleShare = () => {
+        const url = window.location.href; // Simplified for now
+        navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const actionButton = (
+        <Button
+            fullWidth
+            variant="contained"
+            onClick={handlePrimaryAction}
+            sx={{
+                bgcolor: accentColor,
+                color: 'common.black',
+                fontWeight: 700,
+                '&:hover': { bgcolor: alpha(accentColor, 0.9) }
+            }}
+        >
+            {copied && actionLabel === 'Copy Prompt' ? 'Prompt Copied!' : actionLabel}
+        </Button>
+    );
+
     return (
         <StandardDialog
             open={true}
@@ -117,14 +154,9 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
             title={item.title}
             actions={
                 <Box sx={{ display: 'flex', gap: 1, width: '100%', px: 1, pb: 1, alignItems: 'center' }}>
-                    <Button
-                        fullWidth
-                        variant="contained"
-                        sx={{ bgcolor: accentColor, color: 'common.black', '&:hover': { bgcolor: alpha(accentColor, 0.9) } }}
-                    >
-                        {actionLabel}
-                    </Button>
+                    {actionButton}
                     <IconButton
+                        onClick={handleShare}
                         sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider', borderRadius: '4px', p: 1 }}
                         title="Share"
                     >

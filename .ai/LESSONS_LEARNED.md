@@ -29,3 +29,9 @@
 - **Issue**: Highly specific application logic (e.g., "Mainland China timeout logic") was scattered across root `App.tsx` files.
 - **Solution**: Encapsulate complex but common initialization flows into Tier 3 "Templates" (e.g., `StandardAppLoader`). This keeps the consumer code declarative and ensures firm-wide consistency for splash screens and connectivity failure handling.
 - **Tags**: #architecture #standardization
+
+### MUI Runtime Error #130 & Deep Import Conflict
+- **Context**: Mixing MUI v7 (Grid2) with existing MUI v5/v6 patterns in a multi-repo setup.
+- **Issue**: Deep imports like `import Box from '@mui/material/Box'` caused "Minified React error #130" (Element type is invalid) during production builds when certain components were bundled into a library (`@som/ui`) and consumed by an app. This happened because different import paths reached the same component symbol via different internal routes, confusing React's element detection.
+- **Solution**: Standardize on **top-level imports** from `@mui/material` (e.g., `import { Box, Grid } from '@mui/material'`). This ensures the bundler treats them as the same module and allows for better tree-shaking in modern Vite/Rollup environments.
+- **Tags**: #mui #react #build #debugging
