@@ -67,6 +67,24 @@ export const CatIcon: React.FC<CatIconProps> = ({ category, size = 16 }) => {
                 <line x1="19" y1="8" x2="12" y2="16" />
             </svg>
         ),
+        'Viz Prompts': (
+            <svg {...p}>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+                <path d="M17 7l.5-1.5.5-1.5L20 5l-1.5.5z" />
+                <path d="M14 4l.3-.7L15 3l-.7.3z" />
+            </svg>
+        ),
+        Idea: (
+            <svg {...p}>
+                <path d="M9 21h6" />
+                <path d="M9 18h6" />
+                <path d="M10 22v-2" />
+                <path d="M14 22v-2" />
+                <path d="M12 2a7 7 0 0 0-7 7c0 2.3 1.2 4.3 3 5.4V18h8v-3.6c1.8-1.1 3-3.1 3-5.4a7 7 0 0 0-7-7z" />
+            </svg>
+        ),
     };
 
     return <>{map[category] || null}</>;

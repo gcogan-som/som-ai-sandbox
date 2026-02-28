@@ -4,21 +4,22 @@ import { Box, Typography, Stack, Divider, Tooltip } from '@mui/material';
 import { HelpOutline } from '@mui/icons-material';
 import { sectionLabelSx, StandardButton, StandardIconButton } from '@som/ui';
 import { activeItemsAtom } from '../../atoms/appAtoms';
-import { showAboutAtom, showSubmitAtom, showReqAtom } from '../../atoms/modalAtoms';
+import { showAboutAtom, showSubmitAtom } from '../../atoms/modalAtoms';
 import { useAuth } from '../../lib/auth/AuthContext';
 
 export const HeroSection: React.FC = () => {
     const [, setShowAbout] = useAtom(showAboutAtom);
     const [, setShowSubmit] = useAtom(showSubmitAtom);
-    const [, setShowReq] = useAtom(showReqAtom);
     const items = useAtomValue(activeItemsAtom);
     const { isAuthenticated } = useAuth();
 
     const stats = [
-        { v: items.filter((i) => i.kind === 'use').length, l: 'Resources' },
-        { v: items.filter((i) => i.kind === 'learn').length, l: 'Guides' },
+        { v: items.filter((i) => i.kind === 'tool').length, l: 'Tools' },
+        { v: items.filter((i) => i.kind === 'example').length, l: 'Examples' },
+        { v: items.filter((i) => i.kind === 'guide').length, l: 'Guides' },
+        { v: items.filter((i) => i.kind === 'workflow').length, l: 'Workflows' },
+        { v: items.filter((i) => i.kind === 'idea').length, l: 'Ideas' },
         { v: new Set(items.map((i) => i.author)).size, l: 'Contributors' },
-        { v: new Set(items.map((i) => i.office).filter((o) => o !== 'Firmwide')).size, l: 'Offices' },
     ];
 
     return (
@@ -59,11 +60,24 @@ export const HeroSection: React.FC = () => {
                 </Box>
             </Stack>
 
-            <Stack direction="row" alignItems="flex-end" spacing={4} flexWrap="wrap">
+            <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems={{ xs: 'flex-start', sm: 'flex-end' }}
+                spacing={{ xs: 3, sm: 4 }}
+                flexWrap="wrap"
+            >
                 {/* Stats Row */}
-                <Stack direction="row" spacing={3.75}>
+                <Stack
+                    direction="row"
+                    spacing={{ xs: 2.5, sm: 3.75 }}
+                    sx={{
+                        flexWrap: 'wrap',
+                        rowGap: 1.5,
+                        width: { xs: '100%', sm: 'auto' }
+                    }}
+                >
                     {stats.map((s) => (
-                        <Box key={s.l}>
+                        <Box key={s.l} sx={{ minWidth: { xs: 'calc(50% - 20px)', sm: 'auto' } }}>
                             <Typography variant="h2" sx={{ fontWeight: 300, letterSpacing: '-0.02em', lineHeight: 1 }}>
                                 {s.v}
                             </Typography>
@@ -81,26 +95,32 @@ export const HeroSection: React.FC = () => {
                     ))}
                 </Stack>
 
-                <Divider orientation="vertical" flexItem sx={{ height: 32, alignSelf: 'center', bgcolor: 'divider', display: { xs: 'none', md: 'block' } }} />
+                <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{
+                        height: 32,
+                        alignSelf: 'center',
+                        bgcolor: 'divider',
+                        display: { xs: 'none', sm: 'block' }
+                    }}
+                />
 
                 {/* Actions Row */}
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
+                >
                     <StandardButton
                         size="legacy"
                         variant="primary"
                         onClick={() => setShowSubmit(true)}
                         disabled={!isAuthenticated}
-                        sx={{ height: 32 }}
+                        sx={{ height: 32, width: { xs: '100%', sm: 'auto' } }}
                     >
                         Contribute Resource
-                    </StandardButton>
-                    <StandardButton
-                        size="legacy"
-                        variant="secondary"
-                        onClick={() => setShowReq(true)}
-                        sx={{ height: 32 }}
-                    >
-                        Request Tool
                     </StandardButton>
                 </Stack>
             </Stack>

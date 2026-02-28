@@ -11,7 +11,7 @@ import {
     favoritesAtom,
     facetsAtom,
 } from '../../atoms/filterAtoms';
-import { CATEGORIES, SORT_OPTIONS, COLORS } from '../../data/categories';
+import { CATEGORIES, SORT_OPTIONS, COLORS, CAT_INFO } from '../../data/categories';
 import { useRotatingHint } from '../../hooks/useRotatingHint';
 import { FacetPanel } from './FacetPanel';
 import type { CategoryName } from '../../types';
@@ -42,7 +42,8 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
     const filters = CATEGORIES.map(c => ({
         value: c,
         label: c,
-        color: c !== 'All' ? COLORS[c as CategoryName] : undefined
+        color: c !== 'All' ? COLORS[c as CategoryName] : undefined,
+        tooltip: c !== 'All' ? CAT_INFO[c as CategoryName] : 'Show all resources'
     }));
 
     return (
@@ -58,7 +59,7 @@ export const LibraryFilterBar: React.FC<LibraryFilterBarProps> = ({ total }) => 
                 if (val === 'All') {
                     setSort('Newest');
                     setShowFavorites(false);
-                    setFacets({ tags: [], offices: [], disciplines: [], authors: [] });
+                    setFacets({ tags: [], offices: [], disciplines: [], authors: [], aiModels: [] });
                 }
             }}
 

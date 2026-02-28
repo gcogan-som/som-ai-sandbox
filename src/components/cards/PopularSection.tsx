@@ -18,7 +18,7 @@ export const PopularSection: React.FC<PopularSectionProps> = ({ onSelect }) => {
     const officeItems = useMemo(
         () =>
             [...activeItems]
-                .filter((i) => i.kind === 'use')
+                .filter((i) => i.kind === 'tool')
                 .sort((a, b) => b.uses - a.uses)
                 .slice(0, 5),
         [activeItems]

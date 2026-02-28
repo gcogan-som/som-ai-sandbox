@@ -30,6 +30,7 @@ Tests should live in `__tests__` next to the implementation or in `src/tests/`.
 - [ ] Event handlers wrapped in `useCallback`.
 - [ ] Large lists virtualized.
 - [ ] No inline object creation in render path.
+- [ ] **Image Compression**: All user-uploaded images must be compressed client-side (Max 100KB) before uploading to Firebase to maintain performance and storage efficiency.
 
 ---
 

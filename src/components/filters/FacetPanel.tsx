@@ -27,6 +27,7 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
     const allOffice = useMemo(() => [...new Set(items.map((i) => i.office))].sort(), [items]);
     const allAuthors = useMemo(() => [...new Set(items.map((i) => i.author))].sort(), [items]);
     const allTags = useMemo(() => [...new Set(items.flatMap((i) => i.tags))].sort(), [items]);
+    const allAiModels = useMemo(() => [...new Set(items.map((i) => i.aiModel).filter(Boolean) as string[])].sort(), [items]);
 
     const toggle = (k: keyof FacetFilters, v: string) => {
         const arr = filters[k];
@@ -94,7 +95,7 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
                     <StandardButton
                         size="legacy"
                         variant="ghost"
-                        onClick={() => setFilters({ tags: [], offices: [], disciplines: [], authors: [] })}
+                        onClick={() => setFilters({ tags: [], offices: [], disciplines: [], authors: [], aiModels: [] })}
                         sx={{ fontSize: '10px' }}
                     >
                         Clear all ({ct})
@@ -115,6 +116,11 @@ export const FacetPanel: React.FC<FacetPanelProps> = ({ onClose }) => {
                 title: "Author",
                 data: allAuthors.map((a) => [a, items.filter((i) => i.author === a).length]),
                 filterKey: "authors"
+            })}
+            {allAiModels.length > 0 && renderSection({
+                title: "Tool Type / AI Model",
+                data: allAiModels.map((m) => [m, items.filter((i) => i.aiModel === m).length]),
+                filterKey: "aiModels"
             })}
             {renderSection({
                 title: "Tags",

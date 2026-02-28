@@ -20,10 +20,20 @@ export function FirebaseSync() {
         // Sync Resources
         const resourcesQuery = query(collection(db, 'resources'), orderBy('date', 'desc'));
         const unsubResources = onSnapshot(resourcesQuery, (snapshot) => {
-            const items = snapshot.docs.map(doc => ({
-                id: doc.id as any, // Firebase IDs are strings, our types might need widening later
-                ...doc.data()
-            })) as ResourceItem[];
+            const items = snapshot.docs.map(doc => {
+                const data = doc.data();
+
+                // Backwards compatibility layer for legacy data
+                let kind = data.kind;
+                if (kind === 'use') kind = 'tool';
+                if (kind === 'learn') kind = 'guide';
+
+                return {
+                    id: doc.id as any,
+                    ...data,
+                    kind
+                };
+            }) as ResourceItem[];
             setLiveItems(items);
         }, (error) => {
             console.error("Firestore Resources Sync Error:", error);

@@ -26,6 +26,8 @@ export function useFilter() {
                 r = r.filter((i) => facets.disciplines.includes(i.discipline));
             if (facets.authors.length)
                 r = r.filter((i) => facets.authors.includes(i.author));
+            if (facets.aiModels.length)
+                r = r.filter((i) => i.aiModel && facets.aiModels.includes(i.aiModel));
             if (search) {
                 const q = search.toLowerCase();
                 r = r.filter(
@@ -56,14 +58,33 @@ export function useFilter() {
         [category, sort, search, facets, showFavorites, favorites]
     );
 
-    const useItems = useMemo(
-        () => doFilter(activeItems.filter((i) => i.kind === 'use')),
+    const toolItems = useMemo(
+        () => doFilter(activeItems.filter((i) => i.kind === 'tool')),
         [doFilter, activeItems]
     );
-    const learnItems = useMemo(
-        () => doFilter(activeItems.filter((i) => i.kind === 'learn')),
+    const exampleItems = useMemo(
+        () => doFilter(activeItems.filter((i) => i.kind === 'example')),
+        [doFilter, activeItems]
+    );
+    const guideItems = useMemo(
+        () => doFilter(activeItems.filter((i) => i.kind === 'guide')),
+        [doFilter, activeItems]
+    );
+    const workflowItems = useMemo(
+        () => doFilter(activeItems.filter((i) => i.kind === 'workflow')),
+        [doFilter, activeItems]
+    );
+    const ideaItems = useMemo(
+        () => doFilter(activeItems.filter((i) => i.kind === 'idea')),
         [doFilter, activeItems]
     );
 
-    return { useItems, learnItems, total: useItems.length + learnItems.length };
+    return {
+        toolItems,
+        exampleItems,
+        guideItems,
+        workflowItems,
+        ideaItems,
+        total: toolItems.length + exampleItems.length + guideItems.length + workflowItems.length + ideaItems.length
+    };
 }

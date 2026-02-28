@@ -55,7 +55,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ open, onClose }) => {
                                 </Typography>
                             </Box>
                             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                                {CAT_INFO[c]?.slice(0, 100)}...
+                                {CAT_INFO[c]}
                             </Typography>
                         </StandardPaper>
                     </Grid>

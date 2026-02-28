@@ -11,6 +11,7 @@ export const facetsAtom = atom<FacetFilters>({
     offices: [],
     disciplines: [],
     authors: [],
+    aiModels: [],
 });
 export const facetCountAtom = atom((get) => {
     const f = get(facetsAtom);

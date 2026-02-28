@@ -4,14 +4,16 @@ import { StandardStarRating } from '@som/ui';
 interface StarsDisplayProps {
     rating: number;
     size?: number;
+    compact?: boolean;
 }
 
-export const StarsDisplay: React.FC<StarsDisplayProps> = ({ rating, size = 11 }) => {
+export const StarsDisplay: React.FC<StarsDisplayProps> = ({ rating, size = 11, compact = false }) => {
     return (
         <StandardStarRating
             value={rating}
             size={size}
-            showLabel
+            showLabel={!compact}
+            compact={compact}
         />
     );
 };

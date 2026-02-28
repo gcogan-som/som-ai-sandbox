@@ -17,6 +17,7 @@
     "@react-oauth/google": "^0.13.4",
     "@som/dev-shell": "file:../som-dev-shell",
     "@som/ui": "file:../som-ui",
+    "browser-image-compression": "^2.0.2",
     "firebase": "^12.9.0",
     "framer-motion": "^12.34.3",
     "jotai": "^2.18.0",

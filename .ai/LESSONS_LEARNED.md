@@ -35,3 +35,15 @@
 - **Issue**: Deep imports like `import Box from '@mui/material/Box'` caused "Minified React error #130" (Element type is invalid) during production builds when certain components were bundled into a library (`@som/ui`) and consumed by an app. This happened because different import paths reached the same component symbol via different internal routes, confusing React's element detection.
 - **Solution**: Standardize on **top-level imports** from `@mui/material` (e.g., `import { Box, Grid } from '@mui/material'`). This ensures the bundler treats them as the same module and allows for better tree-shaking in modern Vite/Rollup environments.
 - **Tags**: #mui #react #build #debugging
+
+### Firebase Storage "Unauthorized" Quirk
+- **Context**: Enabling Firebase Storage on an existing project.
+- **Issue**: Even after upgrading to the Blaze plan, uploads return `storage/unauthorized` if the bucket hasn't been explicitly provisioned via the "Get Started" button in the Firebase Console. Additionally, security rules must be published *after* provisioning to allow authenticated writes.
+- **Solution**: 1. Manually click "Get Started" in Firebase Storage console. 2. Deploy rules via CLI (`firebase deploy --only storage`) or console to ensure `request.auth != null` is enforced. 3. Ensure client-side compression is used to keep files under 100KB to prevent quota overflow.
+- **Tags**: #firebase #storage #security
+
+### TypeScript Index Signature Error (TS7053)
+- **Context**: Accessing a `Record<K, V>` with a string variable in Strict Mode.
+- **Issue**: Attempting to use `CAT_SHORT_INFO[form.type]` failed with TS7053 because `form.type` was typed as `string`, but the Record keys were a specific union of `CategoryName`.
+- **Solution**: Explicitly cast the index key to the expected type (e.g., `CAT_SHORT_INFO[form.type as CategoryName]`) or ensure the state variable is strictly typed from the start. This is common when binding MUI Select components to a state that defaults to an empty string.
+- **Tags**: #typescript #react #debugging

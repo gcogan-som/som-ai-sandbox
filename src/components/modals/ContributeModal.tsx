@@ -1,22 +1,135 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Box,
     Typography,
     TextField,
+    CircularProgress,
+    IconButton,
+    Tooltip,
+    ButtonBase,
 } from '@mui/material';
-import { Close, Construction, Description } from '@mui/icons-material';
+import { Close, Construction, Description, Visibility, AccountTree, Lightbulb, UploadFile, Delete } from '@mui/icons-material';
 import { StandardDialog, FormField, StandardSelect, StandardButton, StandardIconButton } from '@som/ui';
 import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAtomValue, useAtom } from 'jotai';
-import { db } from '../../lib/firebase';
+import { db, storage } from '../../lib/firebase';
 import { isDevModeAtom } from '../../atoms/appAtoms';
 import { editingItemAtom } from '../../atoms/modalAtoms';
 import { useAuth } from '../../lib/auth/AuthContext';
-import { CATEGORIES } from '../../data/categories';
+import { CATEGORIES, CAT_SHORT_INFO } from '../../data/categories';
 import { DISCIPLINES } from '../../data/disciplines';
 import { OFFICES } from '../../data/offices';
 import { TagInput } from '../shared/TagInput';
 import type { CategoryName } from '../../types';
+import imageCompression from 'browser-image-compression';
+
+const AI_MODELS = [
+    'Nano Banana',
+    'Midjourney',
+    'Stable Diffusion',
+    'ChatGPT',
+    'Claude',
+    'Gemini',
+    'Runway',
+    'Pika',
+    'Other'
+];
+
+interface UploadZoneProps {
+    label: string;
+    url: string;
+    onUpload: (url: string) => void;
+    onClear: () => void;
+    uploading: boolean;
+    setUploading: (val: boolean) => void;
+}
+
+const UploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onClear, uploading, setUploading }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        setUploading(true);
+
+        try {
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 2048,
+                useWebWorker: true,
+                initialQuality: 0.8
+            };
+            const compressedFile = await imageCompression(file, options);
+            const storageRef = ref(storage, `resources/${Date.now()}_${compressedFile.name}`);
+            await uploadBytes(storageRef, compressedFile);
+            const downloadUrl = await getDownloadURL(storageRef);
+            onUpload(downloadUrl);
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload image. Please try again.');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <Box sx={{ width: '100%' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                {label}
+            </Typography>
+            {url ? (
+                <Box sx={{ position: 'relative', width: '100%', height: 120, borderRadius: 1, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
+                    <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <IconButton
+                        size="small"
+                        onClick={onClear}
+                        sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'background.paper', '&:hover': { bgcolor: 'error.lighter' } }}
+                    >
+                        <Delete fontSize="small" color="error" />
+                    </IconButton>
+                </Box>
+            ) : (
+                <ButtonBase
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                        width: '100%',
+                        height: 120,
+                        border: '1px dashed',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                        bgcolor: 'background.default',
+                        '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                >
+                    {uploading ? (
+                        <CircularProgress size={24} />
+                    ) : (
+                        <>
+                            <UploadFile color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                                Click to upload
+                            </Typography>
+                        </>
+                    )}
+                </ButtonBase>
+            )}
+            <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+            />
+        </Box>
+    );
+};
 
 interface ContributeModalProps {
     open: boolean;
@@ -28,7 +141,7 @@ interface ContributeModalProps {
 export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose }) => {
     const [step, setStep] = useState(1);
     const [form, setForm] = useState({
-        kind: 'use' as 'use' | 'learn',
+        kind: 'tool' as 'tool' | 'example' | 'guide' | 'workflow' | 'idea',
         name: '',
         desc: '',
         type: 'Gems',
@@ -36,7 +149,13 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
         office: 'New York',
         link: '',
         prompt: '',
+        aiModel: AI_MODELS[0],
+        problemStatement: '',
+        proposedSolution: '',
     });
+    const [vizImages, setVizImages] = useState({ result: '', original: '', style: '' });
+    const [uploadingImages, setUploadingImages] = useState({ result: false, original: false, style: false });
+
     const [tags, setTags] = useState<string[]>([]);
     const [extraLinks, setExtraLinks] = useState<string[]>(['']);
     const [submitting, setSubmitting] = useState(false);
@@ -47,7 +166,7 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
     React.useEffect(() => {
         if (editingItem && open) {
             setForm({
-                kind: editingItem.kind,
+                kind: (editingItem.kind as any) || 'tool',
                 name: editingItem.title,
                 desc: editingItem.description,
                 type: editingItem.category,
@@ -55,12 +174,20 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 office: editingItem.office || 'New York',
                 link: editingItem.primaryLink || '',
                 prompt: editingItem.prompt || '',
+                aiModel: editingItem.aiModel || AI_MODELS[0],
+                problemStatement: editingItem.problemStatement || '',
+                proposedSolution: editingItem.proposedSolution || '',
+            });
+            setVizImages({
+                result: editingItem.vizImages?.result || '',
+                original: editingItem.vizImages?.original || '',
+                style: editingItem.vizImages?.style || '',
             });
             setTags(editingItem.tags);
             setExtraLinks(editingItem.supportingLinks?.length ? [...editingItem.supportingLinks, ''] : ['']);
         } else if (open) {
             setForm({
-                kind: 'use',
+                kind: 'tool',
                 name: '',
                 desc: '',
                 type: 'Gems',
@@ -68,7 +195,11 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 office: 'New York',
                 link: '',
                 prompt: '',
+                aiModel: AI_MODELS[0],
+                problemStatement: '',
+                proposedSolution: '',
             });
+            setVizImages({ result: '', original: '', style: '' });
             setTags([]);
             setExtraLinks(['']);
             setStep(1);
@@ -81,10 +212,16 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
         setStep(1);
     };
 
-    const upd = (k: string, v: string) => setForm({ ...form, [k]: v });
+    const upd = (k: string, v: string) => {
+        const updates: any = { [k]: v };
+        if (k === 'kind' && v === 'idea') updates.type = 'Idea';
+        if (k === 'type' && v === 'Idea') updates.kind = 'idea';
+        if (k === 'kind' && v !== 'idea' && form.type === 'Idea') updates.type = 'Gems';
+        setForm({ ...form, ...updates });
+    };
 
     const handleSubmit = async () => {
-        if (!form.name || !form.link) {
+        if (!form.name || (!form.link && form.kind !== 'idea' && form.type !== 'Viz Prompts')) {
             alert("Please provide at least a name and a primary link.");
             return;
         }
@@ -100,7 +237,8 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 category: form.type as CategoryName,
                 discipline: form.discipline,
                 office: form.office,
-                author: user?.displayName || 'Anonymous',
+                author: editingItem ? editingItem.author : (user?.displayName || 'Anonymous'),
+                authorPhotoUrl: editingItem ? (editingItem.authorPhotoUrl || '') : (user?.photoURL || ''),
                 date: editingItem ? editingItem.date : new Date().toISOString().split('T')[0],
                 rating: editingItem ? editingItem.rating : 0,
                 uses: editingItem ? editingItem.uses : 0,
@@ -110,6 +248,10 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 tips: editingItem ? editingItem.tips : [],
                 primaryLink: form.link,
                 prompt: form.prompt,
+                aiModel: form.aiModel,
+                vizImages: vizImages,
+                problemStatement: form.problemStatement,
+                proposedSolution: form.proposedSolution,
                 supportingLinks: extraLinks.filter(l => l.trim() !== ''),
                 supportingFiles: editingItem?.supportingFiles || [],
                 updatedAt: serverTimestamp()
@@ -120,8 +262,6 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
             }
 
             if (!devMode) {
-                // Fire and forget: Firestore handles optimistic UI updates automatically.
-                // We no longer `await` the network response because it hangs indefinitely on Zscaler/VPNs.
                 try {
                     if (editingItem) {
                         const docRef = doc(db, 'resources', editingItem.id.toString());
@@ -136,10 +276,8 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 console.log("Dev Mode: Simulated persistence", resourceData);
             }
 
-            // SUCCESS FLOW
             setSubmitting(false);
             handleClose();
-            // Small delay for alert so the modal closure finishes rendering
             setTimeout(() => {
                 alert(editingItem ? "Successfully updated!" : "Successfully saved to Sandbox!");
             }, 100);
@@ -147,7 +285,7 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
         } catch (error: any) {
             console.error("Critical submission error:", error);
             setSubmitting(false);
-            alert(`Submission failed: ${error.message || 'Unknown error'}. Check your connection.`);
+            alert(`Submission failed: ${error.message || 'Unknown error'}`);
         }
     };
 
@@ -167,6 +305,13 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
             open={open}
             onClose={() => !submitting && handleClose()}
             title={editingItem ? 'Editing Resource' : (step === 1 ? 'Contribute' : 'Almost There')}
+            maxWidth="xl"
+            sx={{
+                '& .MuiDialog-paper': {
+                    width: { xs: '95vw', sm: '85vw', md: '75vw' },
+                    maxWidth: '1200px !important'
+                }
+            }}
             actions={
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', px: 1, pb: 1 }}>
                     {step === 1 ? (
@@ -181,7 +326,7 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                             <StandardButton variant="secondary" onClick={() => setStep(1)} sx={{ height: 36.5 }} disabled={submitting}>
                                 Back
                             </StandardButton>
-                            <StandardButton variant="primary" onClick={handleSubmit} disabled={submitting || !form.name.trim() || !form.link.trim()}>
+                            <StandardButton variant="primary" onClick={handleSubmit} disabled={submitting || !form.name.trim() || (!form.link.trim() && form.kind !== 'idea' && form.type !== 'Viz Prompts')}>
                                 {submitting
                                     ? (editingItem ? 'Updating...' : 'Submitting...')
                                     : (editingItem ? 'Update' : 'Submit')}
@@ -201,7 +346,6 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 }}
             />
 
-            {/* Step Indicator */}
             <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
                 {[1, 2].map((s) => (
                     <Box
@@ -221,37 +365,41 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         {[
-                            { id: 'use', icon: <Construction sx={{ fontSize: 28 }} />, label: 'Submit a Resource' },
-                            { id: 'learn', icon: <Description sx={{ fontSize: 28 }} />, label: 'Submit a Guide' }
+                            { id: 'tool', icon: <Construction sx={{ fontSize: 28 }} />, label: 'Submit a Tool' },
+                            { id: 'example', icon: <Visibility sx={{ fontSize: 28 }} />, label: 'Submit an Example' },
+                            { id: 'guide', icon: <Description sx={{ fontSize: 28 }} />, label: 'Submit a Guide' },
+                            { id: 'workflow', icon: <AccountTree sx={{ fontSize: 28 }} />, label: 'Submit a Workflow' },
+                            { id: 'idea', icon: <Lightbulb sx={{ fontSize: 28 }} />, label: 'Submit an Idea' }
                         ].map((opt) => {
                             const selected = form.kind === opt.id;
                             return (
-                                <Box
-                                    key={opt.id}
-                                    onClick={() => upd('kind', opt.id)}
-                                    sx={{
-                                        flex: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        p: 2,
-                                        gap: 1,
-                                        borderRadius: 1,
-                                        cursor: 'pointer',
-                                        border: '1px solid',
-                                        borderColor: selected ? 'primary.main' : 'divider',
-                                        bgcolor: selected ? 'action.selected' : 'background.paper',
-                                        '&:hover': {
-                                            bgcolor: selected ? 'action.selected' : 'action.hover',
-                                        }
-                                    }}
-                                >
-                                    <Box sx={{ color: selected ? 'primary.main' : 'text.disabled' }}>
-                                        {opt.icon}
+                                <Tooltip title={opt.label} key={opt.id}>
+                                    <Box
+                                        onClick={() => upd('kind', opt.id)}
+                                        sx={{
+                                            flex: 1,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            p: 2,
+                                            gap: 1,
+                                            borderRadius: 1,
+                                            cursor: 'pointer',
+                                            border: '1px solid',
+                                            borderColor: selected ? 'primary.main' : 'divider',
+                                            bgcolor: selected ? 'action.selected' : 'background.paper',
+                                            '&:hover': {
+                                                bgcolor: selected ? 'action.selected' : 'action.hover',
+                                            }
+                                        }}
+                                    >
+                                        <Box sx={{ color: selected ? 'primary.main' : 'text.disabled' }}>
+                                            {opt.icon}
+                                        </Box>
+                                        <Typography variant="caption" sx={{ fontWeight: 600 }}>{opt.label}</Typography>
                                     </Box>
-                                    <Typography variant="caption" sx={{ fontWeight: 600 }}>{opt.label}</Typography>
-                                </Box>
+                                </Tooltip>
                             );
                         })}
                     </Box>
@@ -282,11 +430,18 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
 
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <FormField label="Category" sx={{ flex: 1 }}>
-                            <StandardSelect
-                                value={form.type}
-                                onChange={(e: any) => upd('type', e.target.value)}
-                                options={CATEGORIES.filter((c) => c !== 'All').map(c => ({ label: c, value: c }))}
-                            />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <StandardSelect
+                                    value={form.type}
+                                    onChange={(e: any) => upd('type', e.target.value)}
+                                    options={CATEGORIES.filter((c) => c !== 'All').map(c => ({ label: c, value: c }))}
+                                />
+                                {CAT_SHORT_INFO[form.type as CategoryName] && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        {CAT_SHORT_INFO[form.type as CategoryName]}
+                                    </Typography>
+                                )}
+                            </Box>
                         </FormField>
                         <FormField label="Discipline" sx={{ flex: 1 }}>
                             <StandardSelect
@@ -307,19 +462,92 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 </Box>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                    <FormField label="Primary Tool Link" required>
-                        <TextField
-                            id="resource-link"
-                            name="resource-link"
-                            fullWidth
-                            size="small"
-                            placeholder="Direct URL to the AI tool, prompt, or notebook"
-                            value={form.link}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => upd('link', e.target.value)}
-                        />
-                    </FormField>
+                    {form.kind === 'idea' ? (
+                        <>
+                            <FormField label="Problem Statement" required>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    placeholder="What is the problem?"
+                                    value={form.problemStatement}
+                                    onChange={(e) => upd('problemStatement', e.target.value)}
+                                />
+                            </FormField>
+                            <FormField label="Proposed Solution" required>
+                                <TextField
+                                    fullWidth
+                                    multiline
+                                    rows={3}
+                                    placeholder="How can AI solve this?"
+                                    value={form.proposedSolution}
+                                    onChange={(e) => upd('proposedSolution', e.target.value)}
+                                />
+                            </FormField>
+                        </>
+                    ) : (
+                        <>
+                            {form.type !== 'Viz Prompts' && (
+                                <FormField label="Primary Link" required>
+                                    <TextField
+                                        id="resource-link"
+                                        name="resource-link"
+                                        fullWidth
+                                        size="small"
+                                        placeholder="Direct URL to the AI tool, prompt, or notebook"
+                                        value={form.link}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => upd('link', e.target.value)}
+                                    />
+                                </FormField>
+                            )}
+
+                            {form.type === 'Viz Prompts' && (
+                                <FormField label="Images (Upload at least a result image)">
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        <UploadZone
+                                            label="AI Result Image"
+                                            url={vizImages.result}
+                                            uploading={uploadingImages.result}
+                                            setUploading={(val) => setUploadingImages({ ...uploadingImages, result: val })}
+                                            onUpload={(url) => setVizImages({ ...vizImages, result: url })}
+                                            onClear={() => setVizImages({ ...vizImages, result: '' })}
+                                        />
+                                        <UploadZone
+                                            label="Source/Original Image (Optional)"
+                                            url={vizImages.original}
+                                            uploading={uploadingImages.original}
+                                            setUploading={(val) => setUploadingImages({ ...uploadingImages, original: val })}
+                                            onUpload={(url) => setVizImages({ ...vizImages, original: url })}
+                                            onClear={() => setVizImages({ ...vizImages, original: '' })}
+                                        />
+                                        <UploadZone
+                                            label="Style Reference Image (Optional)"
+                                            url={vizImages.style}
+                                            uploading={uploadingImages.style}
+                                            setUploading={(val) => setUploadingImages({ ...uploadingImages, style: val })}
+                                            onUpload={(url) => setVizImages({ ...vizImages, style: url })}
+                                            onClear={() => setVizImages({ ...vizImages, style: '' })}
+                                        />
+                                    </Box>
+                                </FormField>
+                            )}
+                        </>
+                    )}
 
                     <TagInput tags={tags} setTags={setTags} />
+
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        {form.type !== 'Idea' && (
+                            <FormField label="AI Model (Optional)" sx={{ flex: 1 }}>
+                                <StandardSelect
+                                    value={form.aiModel}
+                                    onChange={(e: any) => upd('aiModel', e.target.value)}
+                                    options={AI_MODELS.map(m => ({ label: m, value: m }))}
+                                />
+                            </FormField>
+                        )}
+                        <Box sx={{ flex: 1 }} />
+                    </Box>
 
                     <FormField label="Prompt / Instructions (Optional)">
                         <TextField

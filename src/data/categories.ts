@@ -1,7 +1,7 @@
 import type { CategoryName, SortOption } from '../types';
 
 export const CATEGORIES: Array<'All' | CategoryName> = [
-    'All', 'Gems', 'Prompts', 'AI Studio', 'Krea', 'Notebooks', 'Workflows',
+    'All', 'Gems', 'Prompts', 'Viz Prompts', 'AI Studio', 'Krea', 'Notebooks', 'Workflows', 'Idea',
 ];
 
 export const SORT_OPTIONS: SortOption[] = ['Trending', 'Newest', 'Top Rated', 'Most Used'];
@@ -13,6 +13,8 @@ export const COLORS: Record<CategoryName, string> = {
     Krea: '#E07BA0',
     Notebooks: '#B494D0',
     Workflows: '#8BC78A',
+    'Viz Prompts': '#FF9E80',
+    Idea: '#FFD700',
 };
 
 export const CAT_INFO: Record<CategoryName, string> = {
@@ -22,4 +24,17 @@ export const CAT_INFO: Record<CategoryName, string> = {
     Krea: 'AI image generation presets and workflows in Krea. Style configurations, reference image setups, and proven workflows for architectural visualization and presentation graphics.',
     Notebooks: 'Curated knowledge collections in Google NotebookLM. Upload documents and NotebookLM becomes an expert — generating summaries, answering questions, and creating audio overviews.',
     Workflows: 'Step-by-step descriptions of how someone uses AI in their daily work. Not a single tool, but a process — like how you chain Gemini research into a Krea render into a presentation. Share what works for you.',
+    'Viz Prompts': 'Specialized prompts for architectural visualization. Focuses on the "Image-to-Image" or "Text-to-Image" process, including style references, original photos, and final AI-enhanced results.',
+    Idea: 'Early-stage concepts and potential AI applications. Not yet implemented, but open for discussion, refinement, and future development.',
+};
+
+export const CAT_SHORT_INFO: Record<CategoryName, string> = {
+    Gems: 'Custom Gemini experts built for specific tasks.',
+    Prompts: 'Text instructions and copy-paste templates.',
+    'AI Studio': 'Powerful model pipelines and model settings.',
+    Krea: 'Image generation presets and visual workflows.',
+    Notebooks: 'Curated knowledge and source collections.',
+    Workflows: 'Multi-tool processes and daily AI patterns.',
+    'Viz Prompts': 'Architectural visualization and image styles.',
+    Idea: 'Early-stage concepts and potential solutions.',
 };

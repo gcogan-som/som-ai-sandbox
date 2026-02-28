@@ -9,9 +9,9 @@
 [Diagram or description of the system]
 
 ## 2. Core Components
-- **Frontend**: [React/Vite/etc]
-- **Backend/Bridge**: [C#/Python/Node]
-- **Data**: [Database/Files]
+- **Frontend**: React / Vite
+- **Backend/Identity**: Firebase Auth
+- **Data**: Cloud Firestore (NoSQL) & Firebase Storage (Assets)
 
 ## 3. Data Flow
 [Describe how data moves, e.g., Rhino -> Bridge -> React -> State]
