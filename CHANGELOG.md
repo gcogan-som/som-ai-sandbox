@@ -8,11 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **App Category**: Added a new platform category allowing `.html`, `.jsx`, `.js`, and `.tsx` app uploads with an automated pending state.
+- **Admin Approval Engine**: Added an approval workflow restricting visibility and execution of pending apps until explicitly reviewed and approved by an Admin.
+- **Preview Images**: Allowed optional standard preview images for all general categories beyond Viz Prompts.
+- **User Avatar Resolution**: Added logic to parse user emails on contribution to securely link user avatars to their uploads without exposing Admin metadata.
 - **Single Rating Per User**: Implemented individual user rating tracking in Firestore to prevent duplicate vote inflation.
 - **Empty State**: Added a "No Results Found" friendly state with filter reset in `AILibraryPage.tsx`.
 - **Visual Feedback**: Added "Rating recorded!" visual confirmation in `ResourceDetailModal.tsx`.
 
 ### Changed
+- **AILibrary UI**: Updated the Hero copy and added a functional feedback footer indicating author ownership.
+- **SOM UI Alerts**: Replaced custom pending notices with standard SOM UI `<Alert />` components for visual consistency.
 - **Modal Responsiveness**: Updated `ContributeModal` and `ResourceDetailModal` with adaptive widths/heights for mobile and tablet views.
 - **Metadata Centralization**: Centralized `CAT_SHORT_INFO` in `categories.ts` for unified tooltips and dropdown descriptions.
 - **Mock Data**: Synchronized `mockItems.ts` with the latest rating and category typings.

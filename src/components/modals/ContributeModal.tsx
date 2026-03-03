@@ -138,6 +138,86 @@ interface ContributeModalProps {
 
 
 
+const FileUploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onClear, uploading, setUploading }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        setUploading(true);
+
+        try {
+            const storageRef = ref(storage, `resources/apps/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const downloadUrl = await getDownloadURL(storageRef);
+            onUpload(downloadUrl);
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Failed to upload file. Please try again.');
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <Box sx={{ width: '100%' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                {label}
+            </Typography>
+            {url ? (
+                <Box sx={{ position: 'relative', width: '100%', height: 60, borderRadius: 1, overflow: 'hidden', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', px: 2, bgcolor: 'action.selected' }}>
+                    <Typography variant="body2" noWrap sx={{ flex: 1, fontFamily: 'monospace' }}>
+                        {url.split('?')[0].split('/').pop()?.replace(/%20/g, ' ') || 'App File Uploaded'}
+                    </Typography>
+                    <IconButton
+                        size="small"
+                        onClick={onClear}
+                        sx={{ bgcolor: 'background.paper', '&:hover': { bgcolor: 'error.lighter' } }}
+                    >
+                        <Delete fontSize="small" color="error" />
+                    </IconButton>
+                </Box>
+            ) : (
+                <ButtonBase
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                        width: '100%',
+                        height: 60,
+                        border: '1px dashed',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
+                        bgcolor: 'background.default',
+                        '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                >
+                    {uploading ? (
+                        <CircularProgress size={24} />
+                    ) : (
+                        <>
+                            <UploadFile color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                                Click to upload .jsx or .html file
+                            </Typography>
+                        </>
+                    )}
+                </ButtonBase>
+            )}
+            <input
+                type="file"
+                accept=".jsx,.html,.htm,.js,.tsx"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+            />
+        </Box>
+    );
+};
+
 export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose }) => {
     const [step, setStep] = useState(1);
     const [form, setForm] = useState({
@@ -152,9 +232,12 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
         aiModel: AI_MODELS[0],
         problemStatement: '',
         proposedSolution: '',
+        author: '',
     });
     const [vizImages, setVizImages] = useState({ result: '', original: '', style: '' });
     const [uploadingImages, setUploadingImages] = useState({ result: false, original: false, style: false });
+    const [appFileUrl, setAppFileUrl] = useState('');
+    const [uploadingAppFile, setUploadingAppFile] = useState(false);
 
     const [tags, setTags] = useState<string[]>([]);
     const [extraLinks, setExtraLinks] = useState<string[]>(['']);
@@ -162,6 +245,11 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
     const [editingItem, setEditingItem] = useAtom(editingItemAtom);
     const devMode = useAtomValue(isDevModeAtom);
     const { user } = useAuth();
+
+    const ADMIN_EMAILS = ['grant.cogan@som.com'];
+    const ADMIN_NAMES = ['Grant Cogan'];
+    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()) ||
+        user?.displayName && ADMIN_NAMES.includes(user.displayName);
 
     React.useEffect(() => {
         if (editingItem && open) {
@@ -177,12 +265,14 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 aiModel: editingItem.aiModel || AI_MODELS[0],
                 problemStatement: editingItem.problemStatement || '',
                 proposedSolution: editingItem.proposedSolution || '',
+                author: editingItem.author || '',
             });
             setVizImages({
                 result: editingItem.vizImages?.result || '',
                 original: editingItem.vizImages?.original || '',
                 style: editingItem.vizImages?.style || '',
             });
+            setAppFileUrl(editingItem.appFileUrl || '');
             setTags(editingItem.tags);
             setExtraLinks(editingItem.supportingLinks?.length ? [...editingItem.supportingLinks, ''] : ['']);
         } else if (open) {
@@ -198,8 +288,10 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 aiModel: AI_MODELS[0],
                 problemStatement: '',
                 proposedSolution: '',
+                author: user?.displayName || 'Anonymous',
             });
             setVizImages({ result: '', original: '', style: '' });
+            setAppFileUrl('');
             setTags([]);
             setExtraLinks(['']);
             setStep(1);
@@ -221,13 +313,51 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
     };
 
     const handleSubmit = async () => {
-        if (!form.name || (!form.link && form.kind !== 'idea' && form.type !== 'Viz Prompts')) {
-            alert("Please provide at least a name and a primary link.");
+        if (!form.name) {
+            alert("Please provide at least a name.");
+            return;
+        }
+
+        if (form.type === 'App' && !appFileUrl) {
+            alert("Please upload the application file (.jsx or .html).");
+            return;
+        }
+
+        if (form.type !== 'App' && form.type !== 'Viz Prompts' && form.kind !== 'idea' && !form.link) {
+            alert("Please provide a primary link.");
             return;
         }
 
         setSubmitting(true);
         console.log("Submitting contribution for user:", user?.displayName);
+
+        // Resolve author details
+        let finalAuthorName = form.author;
+        let finalAuthorEmail = editingItem?.authorEmail || '';
+        let finalPhotoUrl = editingItem?.authorPhotoUrl || '';
+
+        if (isAdmin) {
+            const trimmedInput = form.author.trim();
+            if (trimmedInput.includes('@')) {
+                finalAuthorEmail = trimmedInput.toLowerCase();
+                const namePart = finalAuthorEmail.split('@')[0];
+                finalAuthorName = namePart.split('.').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+            } else {
+                finalAuthorName = trimmedInput || 'Anonymous';
+            }
+
+            // If admin is submitting for themselves, attach their photo.
+            // Otherwise, don't mistakenly attach the admin's photo to another user's post.
+            if (finalAuthorEmail === user?.email?.toLowerCase() || finalAuthorName === user?.displayName) {
+                finalPhotoUrl = user?.photoURL || '';
+            } else if (!editingItem) {
+                finalPhotoUrl = '';
+            }
+        } else {
+            finalAuthorName = user?.displayName || 'Anonymous';
+            finalAuthorEmail = user?.email || '';
+            finalPhotoUrl = user?.photoURL || '';
+        }
 
         try {
             const resourceData: any = {
@@ -237,8 +367,9 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 category: form.type as CategoryName,
                 discipline: form.discipline,
                 office: form.office,
-                author: editingItem ? editingItem.author : (user?.displayName || 'Anonymous'),
-                authorPhotoUrl: editingItem ? (editingItem.authorPhotoUrl || '') : (user?.photoURL || ''),
+                author: finalAuthorName,
+                authorEmail: finalAuthorEmail,
+                authorPhotoUrl: finalPhotoUrl,
                 date: editingItem ? editingItem.date : new Date().toISOString().split('T')[0],
                 rating: editingItem ? editingItem.rating : 0,
                 uses: editingItem ? editingItem.uses : 0,
@@ -256,6 +387,14 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 supportingFiles: editingItem?.supportingFiles || [],
                 updatedAt: serverTimestamp()
             };
+
+            if (form.type === 'App') {
+                resourceData.appFileUrl = appFileUrl;
+                resourceData.approvalStatus = editingItem ? (editingItem.approvalStatus || 'pending') : 'pending';
+            } else if (editingItem && editingItem.approvalStatus) {
+                // Preserve approval status if switching categories (or clear it depending on policy. We'll preserve it.)
+                resourceData.approvalStatus = editingItem.approvalStatus;
+            }
 
             if (!editingItem) {
                 resourceData.createdAt = serverTimestamp();
@@ -326,7 +465,7 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                             <StandardButton variant="secondary" onClick={() => setStep(1)} sx={{ height: 36.5 }} disabled={submitting}>
                                 Back
                             </StandardButton>
-                            <StandardButton variant="primary" onClick={handleSubmit} disabled={submitting || !form.name.trim() || (!form.link.trim() && form.kind !== 'idea' && form.type !== 'Viz Prompts')}>
+                            <StandardButton variant="primary" onClick={handleSubmit} disabled={submitting || !form.name.trim() || (form.type === 'App' ? !appFileUrl : (form.type !== 'Viz Prompts' && form.kind !== 'idea' && !form.link.trim()))}>
                                 {submitting
                                     ? (editingItem ? 'Updating...' : 'Submitting...')
                                     : (editingItem ? 'Update' : 'Submit')}
@@ -452,13 +591,27 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                         </FormField>
                     </Box>
 
-                    <FormField label="Office (Optional)">
-                        <StandardSelect
-                            value={form.office}
-                            onChange={(e: any) => upd('office', e.target.value)}
-                            options={OFFICES.map(o => ({ label: o, value: o }))}
-                        />
-                    </FormField>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <FormField label="Office (Optional)" sx={{ flex: 1 }}>
+                            <StandardSelect
+                                value={form.office}
+                                onChange={(e: any) => upd('office', e.target.value)}
+                                options={OFFICES.map(o => ({ label: o, value: o }))}
+                            />
+                        </FormField>
+                        {isAdmin && (
+                            <FormField label="Author (Admin Only)" sx={{ flex: 1 }}>
+                                <TextField
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Author name"
+                                    value={form.author}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => upd('author', e.target.value)}
+                                />
+                            </FormField>
+                        )}
+                        {!isAdmin && <Box sx={{ flex: 1 }} />}
+                    </Box>
                 </Box>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -487,7 +640,7 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                         </>
                     ) : (
                         <>
-                            {form.type !== 'Viz Prompts' && (
+                            {form.type !== 'Viz Prompts' && form.type !== 'App' && (
                                 <FormField label="Primary Link" required>
                                     <TextField
                                         id="resource-link"
@@ -501,7 +654,20 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                                 </FormField>
                             )}
 
-                            {form.type === 'Viz Prompts' && (
+                            {form.type === 'App' && (
+                                <FormField label="Application Code" required>
+                                    <FileUploadZone
+                                        label="Upload your .jsx or .html file"
+                                        url={appFileUrl}
+                                        uploading={uploadingAppFile}
+                                        setUploading={setUploadingAppFile}
+                                        onUpload={setAppFileUrl}
+                                        onClear={() => setAppFileUrl('')}
+                                    />
+                                </FormField>
+                            )}
+
+                            {form.type === 'Viz Prompts' ? (
                                 <FormField label="Images (Upload at least a result image)">
                                     <Box sx={{ display: 'flex', gap: 2 }}>
                                         <UploadZone
@@ -527,6 +693,19 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                                             setUploading={(val) => setUploadingImages({ ...uploadingImages, style: val })}
                                             onUpload={(url) => setVizImages({ ...vizImages, style: url })}
                                             onClear={() => setVizImages({ ...vizImages, style: '' })}
+                                        />
+                                    </Box>
+                                </FormField>
+                            ) : (
+                                <FormField label="Preview Image (Optional)">
+                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                        <UploadZone
+                                            label="Cover / Preview Image"
+                                            url={vizImages.result}
+                                            uploading={uploadingImages.result}
+                                            setUploading={(val) => setUploadingImages({ ...uploadingImages, result: val })}
+                                            onUpload={(url) => setVizImages({ ...vizImages, result: url })}
+                                            onClear={() => setVizImages({ ...vizImages, result: '' })}
                                         />
                                     </Box>
                                 </FormField>

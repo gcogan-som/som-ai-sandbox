@@ -22,6 +22,7 @@ import {
 import { useAuth } from '../../lib/auth/AuthContext';
 import { CatIcon } from '../shared/CatIcon';
 import { VerifiedBadge } from '../shared/VerifiedBadge';
+import { checkIsAdmin } from '../../utils/admin';
 
 export interface ResourceCardProps {
     item: ResourceItem;
@@ -59,13 +60,18 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
     const sort = useAtomValue(sortAtom);
     const { user } = useAuth();
     const isFavorite = favorites.includes(item.id);
+    const isAdmin = checkIsAdmin(user as any);
+
+    const isPendingApp = item.category === 'App' && item.approvalStatus === 'pending';
 
     const renderAvatar = (name: string, color: string, size: number) => {
         if (item.authorPhotoUrl) {
             return <StandardAvatar src={item.authorPhotoUrl} size="small" sx={{ width: size, height: size }} />;
         }
-        if (user?.displayName === name && user?.photoURL) {
-            return <StandardAvatar src={user.photoURL} size="small" sx={{ width: size, height: size }} />;
+        if ((item.authorEmail && user?.email === item.authorEmail) || (user?.displayName === name)) {
+            if (user?.photoURL) {
+                return <StandardAvatar src={user.photoURL} size="small" sx={{ width: size, height: size }} />;
+            }
         }
         return <InitialsAvatar name={name} color={color} size={size} />;
     };
@@ -79,7 +85,10 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
 
     return (
         <Box
-            onClick={() => onClick(item)}
+            onClick={() => {
+                if (isPendingApp && !isAdmin) return;
+                onClick(item);
+            }}
             sx={{
                 bgcolor: 'background.paper',
                 borderRadius: 1,
@@ -95,12 +104,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 width: '100%',
                 transition: 'all 0.2s ease',
                 color: (item.vizImages?.result && layout === 'grid') ? 'common.white' : 'text.primary',
+                opacity: isPendingApp ? 0.6 : 1,
+                filter: isPendingApp ? 'grayscale(0.5)' : 'none',
                 '&:hover': {
                     bgcolor: (item.vizImages?.result && layout === 'grid') ? undefined : 'action.hover',
                     borderColor: accentColor,
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 24px -12px rgba(0,0,0,0.2)',
-                    '& .bg-image': { transform: 'scale(1.05)' }
+                    transform: (!isPendingApp || isAdmin) ? 'translateY(-4px)' : 'none',
+                    boxShadow: (!isPendingApp || isAdmin) ? '0 12px 24px -12px rgba(0,0,0,0.2)' : 'none',
+                    '& .bg-image': { transform: (!isPendingApp || isAdmin) ? 'scale(1.05)' : 'none' }
                 },
             }}
         >
@@ -217,6 +228,17 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                        {isPendingApp && (
+                            <StandardChip
+                                label="Pending"
+                                density="compact"
+                                sx={{
+                                    fontWeight: 700,
+                                    bgcolor: 'warning.light',
+                                    color: 'warning.dark',
+                                }}
+                            />
+                        )}
                         <NewBadge date={item.date} />
                         {isLearn && (
                             <StandardChip

@@ -3,7 +3,8 @@ import {
     Box,
     Typography,
     TextField,
-    alpha
+    alpha,
+    Alert
 } from '@mui/material';
 import {
     ArrowUpward,
@@ -11,15 +12,15 @@ import {
     ChevronRight,
     ContentCopy,
     EditOutlined,
-    MoreHoriz,
     Star,
-    StarOutline
+    StarOutline,
+    DeleteOutline
 } from '@mui/icons-material';
 import { useSetAtom, useAtomValue } from 'jotai';
 import { showSubmitAtom, editingItemAtom, selectedItemAtom } from '../../atoms/modalAtoms';
 import { isDevModeAtom } from '../../atoms/appAtoms';
 import { db } from '../../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import {
     StandardDialog,
     TintedSurface,
@@ -33,6 +34,7 @@ import { useAuth } from '../../lib/auth/AuthContext';
 import type { ResourceItem, Tip } from '../../types';
 import { COLORS } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
+import { checkIsAdmin } from '../../utils/admin';
 
 interface ResourceDetailModalProps {
     item: ResourceItem;
@@ -40,21 +42,7 @@ interface ResourceDetailModalProps {
     onAuthorClick: (author: string) => void;
 }
 
-const ADMIN_EMAILS = [
-    'grant.cogan@som.com',
-    'matt.turlock@som.com',
-    'luke.downen@som.com',
-    'grant.mattingly@som.com'
-];
-
 const toTitleCase = (str: string) => str.replace(/-/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
-
-const ADMIN_NAMES = [
-    'Grant Cogan',
-    'Matt Turlock',
-    'Luke Downen',
-    'Grant Mattingly'
-];
 
 // --- ADAPTIVE IMAGE COMPONENTS ---
 
@@ -351,10 +339,11 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         }
     }, [item.userRatings, user?.uid, item.id]);
 
-    const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()) ||
-        user?.displayName && ADMIN_NAMES.includes(user.displayName);
+    const isAdmin = checkIsAdmin(user as any);
     const isAuthor = user?.displayName === item.author;
     const canEdit = isAuthor || isAdmin;
+
+    const isPendingApp = item.category === 'App' && item.approvalStatus === 'pending';
 
     const isLearn = item.kind === 'guide';
     const setShowSubmit = useSetAtom(showSubmitAtom);
@@ -379,6 +368,13 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
     if (item.vizImages?.style) availableImages.push({ label: 'Style Reference', url: item.vizImages.style });
     if (item.vizImages?.result) availableImages.push({ label: 'AI Result', url: item.vizImages.result });
 
+    const hasResult = availableImages.length > 0;
+    const hasPrompt = item.category === 'Idea'
+        ? !!(item.problemStatement || item.proposedSolution || item.prompt)
+        : !!(item.prompt || item.proposedSolution);
+
+    const displayTab = (!hasPrompt && activeTab === 'prompt' && hasResult) ? 'result' : (!hasResult && activeTab === 'result' && hasPrompt) ? 'prompt' : activeTab;
+
     const actionLabel = isLearn
         ? 'Read Full Guide'
         : item.category === 'Gems'
@@ -399,12 +395,42 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         onClose();
     };
 
+    const handleDelete = async () => {
+        if (!isAdmin) return;
+        const confirmDelete = window.confirm(`Are you sure you want to delete "${item.title}"? This cannot be undone.`);
+        if (confirmDelete) {
+            try {
+                const docRef = doc(db, 'resources', String(item.id));
+                await deleteDoc(docRef);
+                onClose();
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Failed to delete resource.");
+            }
+        }
+    };
+
+    const handleAppStatusUpdate = async (status: 'approved' | 'rejected') => {
+        if (!isAdmin) return;
+        try {
+            const docRef = doc(db, 'resources', String(item.id));
+            await updateDoc(docRef, { approvalStatus: status });
+            setSelectedItem({ ...item, approvalStatus: status });
+            if (status === 'rejected') onClose();
+        } catch (error) {
+            console.error("Error updating app status: ", error);
+            alert("Failed to update status.");
+        }
+    };
+
     const renderAvatar = (name: string, color: string, size: number) => {
         if (item.authorPhotoUrl) {
             return <StandardAvatar src={item.authorPhotoUrl} sx={{ width: size, height: size }} />;
         }
-        if (user?.displayName === name && user?.photoURL) {
-            return <StandardAvatar src={user.photoURL} sx={{ width: size, height: size }} />;
+        if ((item.authorEmail && user?.email === item.authorEmail) || (user?.displayName === name)) {
+            if (user?.photoURL) {
+                return <StandardAvatar src={user.photoURL} sx={{ width: size, height: size }} />;
+            }
         }
         return <InitialsAvatar name={name} color={color} size={size} />;
     };
@@ -446,6 +472,7 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
         if (copied && !item.primaryLink) return 'Copied!';
         if (item.category === 'Idea') return null;
         if ((item.category === 'Viz Prompts' || item.category === 'Prompts') && !item.primaryLink) return 'Copy Prompt';
+        if (item.category === 'App' && item.appFileUrl) return isPendingApp ? 'Download Source' : 'Launch App';
         return actionLabel;
     })();
 
@@ -493,12 +520,14 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                                     icon={EditOutlined}
                                     label="Edit resource"
                                 />
-                                <StandardIconButton
-                                    onClick={() => { }}
-                                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
-                                    icon={MoreHoriz}
-                                    label="More options"
-                                />
+                                {isAdmin && (
+                                    <StandardIconButton
+                                        onClick={handleDelete}
+                                        sx={{ border: '1px solid', borderColor: 'error.main', borderRadius: 1, color: 'error.main', '&:hover': { bgcolor: 'error.lighter', borderColor: 'error.main' } }}
+                                        icon={DeleteOutline}
+                                        label="Delete resource"
+                                    />
+                                )}
                             </>
                         )}
                     </Box>
@@ -506,8 +535,14 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                     {item.category !== 'Idea' && item.category !== 'Viz Prompts' && (
                         <StandardButton
                             variant="primary"
-                            onClick={handlePrimaryAction}
-                            endIcon={item.primaryLink ? <ChevronRight /> : undefined}
+                            onClick={() => {
+                                if (item.category === 'App' && item.appFileUrl) {
+                                    window.open(item.appFileUrl, '_blank', 'noopener,noreferrer');
+                                } else {
+                                    handlePrimaryAction();
+                                }
+                            }}
+                            endIcon={item.primaryLink || item.category === 'App' ? <ChevronRight /> : undefined}
                             sx={{
                                 color: 'common.white',
                                 bgcolor: alpha(accentColor, 0.8),
@@ -567,6 +602,32 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                     </Box>
                 </Box>
 
+                {isPendingApp && isAdmin && (
+                    <Box sx={{ mb: 3 }}>
+                        <Alert
+                            severity="warning"
+                            action={
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <StandardButton size="small" variant="primary" onClick={() => handleAppStatusUpdate('approved')}>
+                                        Approve
+                                    </StandardButton>
+                                    <StandardButton size="small" variant="secondary" onClick={() => handleAppStatusUpdate('rejected')} sx={{ color: 'error.main', borderColor: 'error.main', '&:hover': { bgcolor: 'error.lighter' } }}>
+                                        Reject
+                                    </StandardButton>
+                                </Box>
+                            }
+                            sx={{ mb: 2, alignItems: 'flex-start' }}
+                        >
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5, display: 'block' }}>
+                                Admin Review Required
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                This app is pending approval. Regular users cannot access or view it. Please review the source code by clicking "Download Source" below to ensure it's safe.
+                            </Typography>
+                        </Alert>
+                    </Box>
+                )}
+
                 <Box sx={{ borderTop: '1px solid', borderColor: 'divider', my: 3 }} />
 
                 {/* Content Zone */}
@@ -617,105 +678,102 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                     </Box>
                 ) : (
                     /* Default Tabbed Layout for other categories */
-                    <Box sx={{ mb: 3 }}>
-                        <Box sx={{ display: 'flex', gap: 3, borderBottom: '1px solid', borderColor: 'divider', mb: 2 }}>
-                            <Box
-                                onClick={() => setActiveTab('prompt')}
-                                sx={{
-                                    pb: 1,
-                                    cursor: 'pointer',
-                                    borderBottom: '2px solid',
-                                    borderColor: activeTab === 'prompt' ? accentColor : 'transparent',
-                                    color: activeTab === 'prompt' ? 'text.primary' : 'text.disabled',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.05em' }}>
-                                    {toTitleCase(
-                                        item.category === 'Workflows' ? 'Execution Details' :
-                                            item.category === 'Idea' ? 'Problem & Solution' : 'Prompt / Setup'
-                                    )}
-                                </Typography>
-                            </Box>
-                            <Box
-                                onClick={() => setActiveTab('result')}
-                                sx={{
-                                    pb: 1,
-                                    cursor: 'pointer',
-                                    borderBottom: '2px solid',
-                                    borderColor: activeTab === 'result' ? accentColor : 'transparent',
-                                    color: activeTab === 'result' ? 'text.primary' : 'text.disabled',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.05em' }}>
-                                    {toTitleCase(item.category === 'Idea' ? 'Visual References' : 'Outcome')}
-                                </Typography>
-                            </Box>
-                        </Box>
-
-                        {activeTab === 'prompt' ? (
-                            <Box sx={{ position: 'relative', bgcolor: 'background.default', p: 2, borderRadius: 1.5, border: '1px solid', borderColor: 'divider' }}>
-                                <Typography variant="body2" sx={{ pr: 6, fontFamily: 'monospace', fontSize: '13px', color: 'text.secondary', whiteSpace: 'pre-wrap' }}>
-                                    {item.category === 'Idea' && item.problemStatement ? (
-                                        <>
-                                            <Box component="span" sx={{ display: 'block', fontWeight: 700, mb: 1, color: 'text.primary', letterSpacing: '0.05em' }}>PROBLEM STATEMENT</Box>
-                                            {item.problemStatement}
-                                            <Box component="span" sx={{ display: 'block', fontWeight: 700, mt: 3, mb: 1, color: 'text.primary', letterSpacing: '0.05em' }}>PROPOSED SOLUTION</Box>
-                                            {item.proposedSolution || item.prompt || 'No solution details available yet.'}
-                                        </>
-                                    ) : (
-                                        item.prompt || item.proposedSolution || 'No details available.'
-                                    )}
-                                </Typography>
-                                {(item.prompt || item.proposedSolution) && (
-                                    <StandardButton
-                                        size="legacy"
-                                        startIcon={<ContentCopy sx={{ fontSize: 14 }} />}
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(item.prompt || item.proposedSolution || '');
-                                            setCopied(true);
-                                            setTimeout(() => setCopied(false), 2000);
-                                        }}
+                    (hasPrompt || hasResult) && (
+                        <Box sx={{ mb: 3 }}>
+                            {(hasPrompt && hasResult) && (
+                                <Box sx={{ display: 'flex', gap: 3, borderBottom: '1px solid', borderColor: 'divider', mb: 2 }}>
+                                    <Box
+                                        onClick={() => setActiveTab('prompt')}
                                         sx={{
-                                            position: 'absolute',
-                                            top: 12,
-                                            right: 12,
-                                            bgcolor: 'background.paper',
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                            color: 'text.secondary',
-                                            '&:hover': { bgcolor: 'action.hover' }
+                                            pb: 1,
+                                            cursor: 'pointer',
+                                            borderBottom: '2px solid',
+                                            borderColor: displayTab === 'prompt' ? accentColor : 'transparent',
+                                            color: displayTab === 'prompt' ? 'text.primary' : 'text.disabled',
+                                            transition: 'all 0.2s'
                                         }}
                                     >
-                                        {copied ? 'Copied' : 'Copy'}
-                                    </StandardButton>
-                                )}
-                            </Box>
-                        ) : (
-                            <Box sx={{ height: availableImages.length > 0 ? { xs: 300, md: 400 } : 80, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', borderRadius: 1.5, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
-                                {availableImages.length > 0 ? (
-                                    <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-                                        <Box component="img" src={availableImages[carouselIndex].url} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        {availableImages.length > 1 && (
-                                            <Box sx={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1 }}>
-                                                {availableImages.map((_, i) => (
-                                                    <Box key={i} onClick={() => setCarouselIndex(i)} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: i === carouselIndex ? 'common.white' : alpha('#fff', 0.5), cursor: 'pointer' }} />
-                                                ))}
-                                            </Box>
+                                        <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.05em' }}>
+                                            {toTitleCase(
+                                                item.category === 'Workflows' ? 'Execution Details' :
+                                                    item.category === 'Idea' ? 'Problem & Solution' : 'Prompt / Setup'
+                                            )}
+                                        </Typography>
+                                    </Box>
+                                    <Box
+                                        onClick={() => setActiveTab('result')}
+                                        sx={{
+                                            pb: 1,
+                                            cursor: 'pointer',
+                                            borderBottom: '2px solid',
+                                            borderColor: displayTab === 'result' ? accentColor : 'transparent',
+                                            color: displayTab === 'result' ? 'text.primary' : 'text.disabled',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <Typography variant="overline" sx={{ fontWeight: 800, letterSpacing: '0.05em' }}>
+                                            {toTitleCase(item.category === 'Idea' ? 'Visual References' : 'Outcome')}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            )}
+
+                            {displayTab === 'prompt' && hasPrompt ? (
+                                <Box sx={{ position: 'relative', bgcolor: 'background.default', p: 2, borderRadius: 1.5, border: '1px solid', borderColor: 'divider' }}>
+                                    <Typography variant="body2" sx={{ pr: 6, fontFamily: 'monospace', fontSize: '13px', color: 'text.secondary', whiteSpace: 'pre-wrap' }}>
+                                        {item.category === 'Idea' && item.problemStatement ? (
+                                            <>
+                                                <Box component="span" sx={{ display: 'block', fontWeight: 700, mb: 1, color: 'text.primary', letterSpacing: '0.05em' }}>PROBLEM STATEMENT</Box>
+                                                {item.problemStatement}
+                                                <Box component="span" sx={{ display: 'block', fontWeight: 700, mt: 3, mb: 1, color: 'text.primary', letterSpacing: '0.05em' }}>PROPOSED SOLUTION</Box>
+                                                {item.proposedSolution || item.prompt || 'No solution details available yet.'}
+                                            </>
+                                        ) : (
+                                            item.prompt || item.proposedSolution || 'No details available.'
                                         )}
-                                    </Box>
-                                ) : (
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <CatIcon category={item.category} size={16} />
+                                    </Typography>
+                                    {(item.prompt || item.proposedSolution) && (
+                                        <StandardButton
+                                            size="legacy"
+                                            startIcon={<ContentCopy sx={{ fontSize: 14 }} />}
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(item.prompt || item.proposedSolution || '');
+                                                setCopied(true);
+                                                setTimeout(() => setCopied(false), 2000);
+                                            }}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: 12,
+                                                right: 12,
+                                                bgcolor: 'background.paper',
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                color: 'text.secondary',
+                                                '&:hover': { bgcolor: 'action.hover' }
+                                            }}
+                                        >
+                                            {copied ? 'Copied' : 'Copy'}
+                                        </StandardButton>
+                                    )}
+                                </Box>
+                            ) : displayTab === 'result' && hasResult ? (
+                                <Box sx={{ height: availableImages.length > 0 ? { xs: 300, md: 400 } : 80, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', borderRadius: 1.5, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
+                                    {availableImages.length > 0 && (
+                                        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+                                            <Box component="img" src={availableImages[carouselIndex].url} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            {availableImages.length > 1 && (
+                                                <Box sx={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1 }}>
+                                                    {availableImages.map((_, i) => (
+                                                        <Box key={i} onClick={() => setCarouselIndex(i)} sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: i === carouselIndex ? 'common.white' : alpha('#fff', 0.5), cursor: 'pointer' }} />
+                                                    ))}
+                                                </Box>
+                                            )}
                                         </Box>
-                                        <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 600 }}>No outcome visualization</Typography>
-                                    </Box>
-                                )}
-                            </Box>
-                        )}
-                    </Box>
+                                    )}
+                                </Box>
+                            ) : null}
+                        </Box>
+                    )
                 )}
 
                 {/* Tags */}

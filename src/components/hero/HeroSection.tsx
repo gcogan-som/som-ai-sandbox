@@ -55,7 +55,7 @@ export const HeroSection: React.FC = () => {
                         color="text.secondary"
                         sx={{ maxWidth: 460, lineHeight: 1.6, mb: 3 }}
                     >
-                        A playground to share how SOM is using ai, driving the car as we're building it.
+                        A playground to share how colleagues across SOM have been using AI, day-to-day. From day-to-day conversations with Gemini, to example visualization prompts, to market research, share your favorite AI uses with others.
                     </Typography>
                 </Box>
             </Stack>

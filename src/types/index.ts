@@ -8,10 +8,11 @@ export interface ResourceItem {
   id: string | number;
   title: string;
   kind: 'tool' | 'example' | 'guide' | 'workflow' | 'idea';
-  category: 'Gems' | 'Prompts' | 'AI Studio' | 'Krea' | 'Notebooks' | 'Workflows' | 'Viz Prompts' | 'Idea';
+  category: 'Gems' | 'Prompts' | 'AI Studio' | 'Krea' | 'Notebooks' | 'Workflows' | 'Viz Prompts' | 'Idea' | 'App';
   discipline: string;
   office: string;
   author: string;
+  authorEmail?: string;
   authorPhotoUrl?: string;
   description: string;
   tags: string[];
@@ -37,6 +38,8 @@ export interface ResourceItem {
   status?: 'Idea' | 'Implemented';
   problemStatement?: string;
   proposedSolution?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  appFileUrl?: string;
 }
 
 export interface RequestItem {
