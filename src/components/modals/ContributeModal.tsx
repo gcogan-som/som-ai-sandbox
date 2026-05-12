@@ -23,6 +23,7 @@ import { OFFICES } from '../../data/offices';
 import { TagInput } from '../shared/TagInput';
 import type { CategoryName } from '../../types';
 import imageCompression from 'browser-image-compression';
+import { guessImageContentType, safeStorageObjectName } from '../../utils/storageUpload';
 
 const AI_MODELS = [
     'Nano Banana',
@@ -69,8 +70,13 @@ const UploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onClear, 
                 initialQuality: 0.8
             };
             const compressedFile = await imageCompression(file, options);
-            const storageRef = ref(storage, `resources/${Date.now()}_${compressedFile.name}`);
-            await uploadBytes(storageRef, compressedFile);
+            const objectName = safeStorageObjectName(file.name, 'photo.jpg');
+            const storageRef = ref(storage, `resources/${Date.now()}_${objectName}`);
+            const contentType = guessImageContentType(file);
+            await uploadBytes(storageRef, compressedFile, {
+                contentType,
+                cacheControl: 'public, max-age=31536000',
+            });
             const downloadUrl = await getDownloadURL(storageRef);
             onUpload(downloadUrl);
         } catch (error) {
@@ -89,7 +95,12 @@ const UploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onClear, 
             </Typography>
             {url ? (
                 <Box sx={{ position: 'relative', width: '100%', height: 120, borderRadius: 1, overflow: 'hidden', border: '1px solid', borderColor: 'divider' }}>
-                    <img src={url} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                        src={url.trim()}
+                        alt={label}
+                        referrerPolicy="no-referrer"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                     <IconButton
                         size="small"
                         onClick={onClear}
@@ -163,8 +174,19 @@ const FileUploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onCle
         setUploading(true);
 
         try {
-            const storageRef = ref(storage, `resources/apps/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
+            const objectName = safeStorageObjectName(file.name, 'app.bin');
+            const storageRef = ref(storage, `resources/apps/${Date.now()}_${objectName}`);
+            const contentType =
+                file.type ||
+                (file.name.toLowerCase().endsWith('.html')
+                    ? 'text/html'
+                    : file.name.toLowerCase().endsWith('.jsx')
+                      ? 'text/javascript'
+                      : 'application/octet-stream');
+            await uploadBytes(storageRef, file, {
+                contentType,
+                cacheControl: 'public, max-age=31536000',
+            });
             const downloadUrl = await getDownloadURL(storageRef);
             onUpload(downloadUrl);
         } catch (error) {
@@ -396,7 +418,11 @@ export const ContributeModal: React.FC<ContributeModalProps> = ({ open, onClose 
                 primaryLink: form.link,
                 prompt: form.prompt,
                 aiModel: form.aiModel,
-                vizImages: vizImages,
+                vizImages: {
+                    result: vizImages.result.trim(),
+                    original: vizImages.original.trim(),
+                    style: vizImages.style.trim(),
+                },
                 problemStatement: form.problemStatement,
                 proposedSolution: form.proposedSolution,
                 supportingLinks: extraLinks.filter(l => l.trim() !== ''),

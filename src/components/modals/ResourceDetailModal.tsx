@@ -92,10 +92,11 @@ const RenderImage: React.FC<{
             {url ? (
                 <Box
                     component="img"
-                    src={url}
+                    src={url.trim()}
                     alt=""
                     loading="lazy"
                     decoding="async"
+                    referrerPolicy="no-referrer"
                     sx={{
                         position: 'absolute',
                         inset: 0,
@@ -778,7 +779,12 @@ export const ResourceDetailModal: React.FC<ResourceDetailModalProps> = ({
                                 <Box sx={{ height: availableImages.length > 0 ? { xs: 300, md: 400 } : 80, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'background.default', borderRadius: 1.5, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}>
                                     {availableImages.length > 0 && (
                                         <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-                                            <Box component="img" src={availableImages[carouselIndex].url} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <Box
+                                                component="img"
+                                                src={availableImages[carouselIndex].url.trim()}
+                                                referrerPolicy="no-referrer"
+                                                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
                                             {availableImages.length > 1 && (
                                                 <Box sx={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 1 }}>
                                                     {availableImages.map((_, i) => (

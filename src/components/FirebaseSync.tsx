@@ -6,6 +6,20 @@ import { liveItemsAtom, refreshAtom } from '../atoms/appAtoms';
 import { liveRequestsAtom } from '../atoms/modalAtoms';
 import type { ResourceItem, RequestItem } from '../types';
 
+function normalizeVizImages<T extends { vizImages?: ResourceItem['vizImages'] }>(data: T): T {
+    const v = data.vizImages;
+    if (!v || typeof v !== 'object') return data;
+    const trim = (s: unknown) => (typeof s === 'string' ? s.trim() : s);
+    return {
+        ...data,
+        vizImages: {
+            result: trim(v.result) as string | undefined,
+            original: trim(v.original) as string | undefined,
+            style: trim(v.style) as string | undefined,
+        },
+    };
+}
+
 /**
  * Background component that synchronizes Firestore collections with Jotai atoms.
  * Only active when Dev Mode is toggled off (handled via atom logic if needed, 
@@ -30,7 +44,7 @@ export function FirebaseSync() {
 
                 return {
                     id: doc.id as any,
-                    ...data,
+                    ...normalizeVizImages(data),
                     kind
                 };
             }) as ResourceItem[];

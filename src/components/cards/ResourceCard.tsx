@@ -64,6 +64,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
 
     const isPendingApp = item.category === 'App' && item.approvalStatus === 'pending';
 
+    const coverUrl = item.vizImages?.result?.trim();
+
     const renderAvatar = (name: string, color: string, size: number) => {
         if (item.authorPhotoUrl) {
             return <StandardAvatar src={item.authorPhotoUrl} size="small" sx={{ width: size, height: size }} />;
@@ -103,11 +105,11 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 height: layout === 'list' ? 'auto' : 240,
                 width: '100%',
                 transition: 'all 0.2s ease',
-                color: (item.vizImages?.result && layout === 'grid') ? 'common.white' : 'text.primary',
+                color: (coverUrl && layout === 'grid') ? 'common.white' : 'text.primary',
                 opacity: isPendingApp ? 0.6 : 1,
                 filter: isPendingApp ? 'grayscale(0.5)' : 'none',
                 '&:hover': {
-                    bgcolor: (item.vizImages?.result && layout === 'grid') ? undefined : 'action.hover',
+                    bgcolor: (coverUrl && layout === 'grid') ? undefined : 'action.hover',
                     borderColor: accentColor,
                     transform: (!isPendingApp || isAdmin) ? 'translateY(-4px)' : 'none',
                     boxShadow: (!isPendingApp || isAdmin) ? '0 12px 24px -12px rgba(0,0,0,0.2)' : 'none',
@@ -130,13 +132,14 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
             }} />
 
             {/* Background Image / Overlay Layer */}
-            {(item.vizImages?.result && layout === 'grid') && (
+            {(coverUrl && layout === 'grid') && (
                 <>
                     {/* Full Background Image */}
                     <Box
                         className="bg-image"
                         component="img"
-                        src={item.vizImages.result}
+                        src={coverUrl}
+                        referrerPolicy="no-referrer"
                         sx={{
                             position: 'absolute',
                             top: 0,
@@ -160,7 +163,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
             )}
 
             {/* List View Image */}
-            {(item.vizImages?.result && layout === 'list') && (
+            {(coverUrl && layout === 'list') && (
                 <Box
                     sx={{
                         width: 120,
@@ -173,8 +176,9 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 >
                     <Box
                         component="img"
-                        src={item.vizImages.result}
+                        src={coverUrl}
                         alt={item.title}
+                        referrerPolicy="no-referrer"
                         sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 </Box>
@@ -188,8 +192,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                 overflow: 'hidden',
                 position: 'relative',
                 zIndex: 2,
-                bgcolor: (item.vizImages?.result && layout === 'grid') ? 'rgba(0,0,0,0.25)' : 'transparent',
-                backdropFilter: (item.vizImages?.result && layout === 'grid') ? 'blur(2px)' : 'none',
+                bgcolor: (coverUrl && layout === 'grid') ? 'rgba(0,0,0,0.25)' : 'transparent',
+                backdropFilter: (coverUrl && layout === 'grid') ? 'blur(2px)' : 'none',
             }}>
                 {/* Header: category icon + type badges */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.25 }}>
@@ -214,7 +218,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                                 variant="overline"
                                 noWrap
                                 sx={{
-                                    color: (item.vizImages?.result && layout === 'grid') ? alpha('#fff', 0.8) : accentColor,
+                                    color: (coverUrl && layout === 'grid') ? alpha('#fff', 0.8) : accentColor,
                                     fontWeight: 800,
                                     letterSpacing: '0.1em',
                                     fontSize: '10px',
@@ -258,8 +262,8 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                                     fontWeight: 800,
                                     color: 'common.white',
                                     fontSize: '10px',
-                                    bgcolor: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.2)' : alpha(accentColor, 0.8),
-                                    backdropFilter: (item.vizImages?.result && layout === 'grid') ? 'blur(8px)' : 'none',
+                                    bgcolor: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.2)' : alpha(accentColor, 0.8),
+                                    backdropFilter: (coverUrl && layout === 'grid') ? 'blur(8px)' : 'none',
                                     px: 0.8,
                                     py: 0.2,
                                     borderRadius: '4px',
@@ -294,7 +298,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                     <Typography
                         variant="caption"
                         sx={{
-                            color: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.8)' : "text.secondary",
+                            color: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.8)' : "text.secondary",
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
@@ -330,9 +334,9 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                                 borderRadius: '100px',
                                 fontWeight: 700,
                                 border: '1px solid',
-                                borderColor: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.2)' : 'divider',
-                                bgcolor: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                color: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.9)' : 'text.secondary',
+                                borderColor: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.2)' : 'divider',
+                                bgcolor: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                color: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.9)' : 'text.secondary',
                             }}
                         />
                     ))}
@@ -347,13 +351,13 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                         pt: 1.5,
                         mt: 0,
                         borderTop: '1px solid',
-                        borderColor: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.15)' : 'divider',
+                        borderColor: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.15)' : 'divider',
                     }}
                 >
                     {/* Author Left (R2) */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         {renderAvatar(item.author, accentColor, 20)}
-                        <Typography variant="caption" sx={{ fontWeight: 600, color: (item.vizImages?.result && layout === 'grid') ? 'rgba(255,255,255,0.8)' : 'text.secondary' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 600, color: (coverUrl && layout === 'grid') ? 'rgba(255,255,255,0.8)' : 'text.secondary' }}>
                             {item.author}
                         </Typography>
                     </Box>
@@ -361,7 +365,7 @@ export const ResourceCard: React.FC<ResourceCardProps> = ({ item, index, onClick
                     {/* Stats Right (R2 + R4) */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography variant="caption" sx={{ fontWeight: 700, color: item.rating > 0 ? ((item.vizImages?.result && layout === 'grid') ? '#fff' : 'text.secondary') : 'text.disabled', fontSize: '11px' }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: item.rating > 0 ? ((coverUrl && layout === 'grid') ? '#fff' : 'text.secondary') : 'text.disabled', fontSize: '11px' }}>
                                 {item.rating > 0 ? `★ ${item.rating.toFixed(1)}` : '★ —'}
                             </Typography>
                         </Box>
