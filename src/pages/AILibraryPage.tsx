@@ -116,12 +116,6 @@ export const AILibraryPage: React.FC = () => {
                 />
             )}
 
-            {/* Footer */}
-            <Box sx={{ mt: 8, pb: 6, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 1, opacity: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">
-                    Questions? Contact Grant Cogan or click the feedback button on the menu bar.
-                </Typography>
-            </Box>
         </Box>
     );
 };

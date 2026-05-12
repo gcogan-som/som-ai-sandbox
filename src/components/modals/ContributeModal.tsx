@@ -51,6 +51,14 @@ const UploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onClear, 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
+
+        // Enforce 10MB limit
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File exceeds the 10MB limit. Please choose a smaller file.');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
         setUploading(true);
 
         try {
@@ -144,6 +152,14 @@ const FileUploadZone: React.FC<UploadZoneProps> = ({ label, url, onUpload, onCle
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
+
+        // Enforce 10MB limit
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File exceeds the 10MB limit. Please choose a smaller file.');
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
+
         setUploading(true);
 
         try {

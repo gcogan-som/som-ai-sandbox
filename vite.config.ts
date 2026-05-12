@@ -6,12 +6,27 @@ import fs from 'fs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+/** Bumped every production build; compared to `version.json` on the server to prompt reload after deploy. */
+const deployBuildId = String(Date.now());
+
 // Check if som-ui exists as a sibling (for local dev)
 const somUiLocalPath = resolve(__dirname, '../som-ui/src');
 const hasLocalSomUi = fs.existsSync(somUiLocalPath);
 
 export default defineConfig({
-  plugins: [react()],
+  define: {
+    __DEPLOY_BUILD_ID__: JSON.stringify(deployBuildId),
+  },
+  plugins: [
+    react(),
+    {
+      name: 'write-deploy-version',
+      closeBundle() {
+        const outFile = resolve(__dirname, 'dist', 'version.json');
+        fs.writeFileSync(outFile, JSON.stringify({ buildId: deployBuildId }), 'utf8');
+      },
+    },
+  ],
   base: './',
   resolve: {
     alias: {

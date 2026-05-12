@@ -85,6 +85,13 @@ export const CatIcon: React.FC<CatIconProps> = ({ category, size = 16 }) => {
                 <path d="M12 2a7 7 0 0 0-7 7c0 2.3 1.2 4.3 3 5.4V18h8v-3.6c1.8-1.1 3-3.1 3-5.4a7 7 0 0 0-7-7z" />
             </svg>
         ),
+        App: (
+            <svg {...p}>
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+        ),
     };
 
     return <>{map[category] || null}</>;

@@ -2,10 +2,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      // Temporarily allowing any authenticated user to write without size limits
-      // to debug the unauthorized issue
+      // Allow read freely, restrict write to 10MB max size and authenticated users.
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null && request.resource.size < 10 * 1024 * 1024;
     }
   }
 }

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Typography, Chip, Grid } from '@mui/material';
-import { StandardDialog, StandardPaper, sectionLabelSx } from '@som/ui';
+import { Box, Typography, Grid } from '@mui/material';
+import { StandardDialog, StandardPaper, sectionLabelSx, StandardVerifiedBadge } from '@som/ui';
 import { CATEGORIES, COLORS, CAT_INFO } from '../../data/categories';
 import { CatIcon } from '../shared/CatIcon';
 import type { CategoryName } from '../../types';
@@ -66,19 +66,20 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ open, onClose }) => {
                 Badges
             </Typography>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 4 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box component="span" sx={{ color: 'info.main', fontSize: 16 }}>🛡️</Box>
+                    <StandardVerifiedBadge size={16} sx={{ color: 'info.main' }} />
                     <Typography variant="body2" color="text.secondary">
                         <Box component="span" sx={{ fontWeight: 600, color: 'text.primary' }}>Verified</Box> — reviewed by the AI Committee for quality and safety.
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="New" size="small" variant="outlined" color="success" sx={{ fontWeight: 700 }} />
-                    <Typography variant="body2" color="text.secondary">
-                        Resources added within the last 7 days.
-                    </Typography>
-                </Box>
+            </Box>
+
+            {/* Footer Text */}
+            <Box sx={{ mt: 'auto', pt: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', opacity: 0.6 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                    Questions — Contact Grant Cogan or use the feedback form on the menu bar.
+                </Typography>
             </Box>
         </StandardDialog>
     );

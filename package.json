@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "release:checklist": "node -e \"console.log('Complete RELEASE_SECURITY_CHECKLIST.md before production builds, then run build:release with CI secrets for VITE_FIREBASE_*.');\"",
+    "build:release": "npm run release:checklist && npm run build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
