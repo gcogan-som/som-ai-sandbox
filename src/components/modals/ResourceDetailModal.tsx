@@ -78,7 +78,7 @@ const RenderImage: React.FC<{
             sx={{
                 aspectRatio: fill ? undefined : aspect,
                 height: fill ? '100%' : undefined,
-                background: url ? `url(${url}) center/cover no-repeat` : c.gradient,
+                background: url ? undefined : c.gradient,
                 borderRadius: '10px',
                 position: 'relative',
                 overflow: 'hidden',
@@ -86,9 +86,27 @@ const RenderImage: React.FC<{
                 cursor: onClick ? 'pointer' : 'default',
                 transition: 'transform 0.15s ease',
                 border: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
             }}
         >
+            {url ? (
+                <Box
+                    component="img"
+                    src={url}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                        pointerEvents: 'none',
+                    }}
+                />
+            ) : null}
             {/* Label */}
             <Box
                 sx={{

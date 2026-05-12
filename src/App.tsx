@@ -29,6 +29,13 @@ import { ContributeModal } from './components/modals/ContributeModal';
 import { RequestModal } from './components/modals/RequestModal';
 import { FeedbackModal } from './components/modals/FeedbackModal';
 
+/** Public files from `public/` (works with `base: './'` on Firebase Hosting). */
+function publicAssetUrl(file: string): string {
+    const base = import.meta.env.BASE_URL;
+    const path = file.replace(/^\//, '');
+    return base.endsWith('/') ? `${base}${path}` : `${base}/${path}`;
+}
+
 function AppContent() {
   const [mode, setMode] = useAtom(themeModeAtom);
   const [showAbout, setShowAbout] = useAtom(showAboutAtom);
@@ -49,7 +56,7 @@ function AppContent() {
       logo={
         <Box
           component="img"
-          src="/som-logo.png"
+          src={publicAssetUrl('som-logo.png')}
           sx={{
             height: 28,
             filter: mode === 'dark' ? 'invert(1)' : 'none',
